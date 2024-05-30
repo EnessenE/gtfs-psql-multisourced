@@ -1,10 +1,12 @@
--- FUNCTION: public.get_stop_times_from_stop(text)
+-- FUNCTION: public.get_stop_times_from_stop(text, time without time zone, date)
 
--- DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text);
+-- DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, time without time zone, date);
 
 CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
-	target text)
-    RETURNS TABLE("TripId" text, "ArrivalTime" text, "DepartureTime" text, "StopHeadsign" text, "DataOrigin" text, "Headsign" text, "ShortName" text, "ServiceId" text, "RouteShortName" text, "RouteLongName" text) 
+	target text,
+	fromtime time without time zone,
+	fromdate date)
+    RETURNS TABLE(tripid text, arrivaltime time without time zone, departuretime time without time zone, stopheadsign text, dataorigin text, headsign text, shortname text, platform text, serviceid text, routeshortname text, routelongname text, operator text) 
     LANGUAGE 'sql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -12,14 +14,27 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
 
 AS $BODY$
 
-select stop_times."TripId", stop_times."ArrivalTime", stop_times."DepartureTime", stop_times."StopHeadsign", stop_times."DataOrigin", trips."Headsign", trips."ShortName", trips."ServiceId", routes."ShortName", routes."LongName" 
-from stop_times
-inner join trips on stop_times."TripId" = trips."Id"
-inner join routes on trips."RouteId" = routes."Id"
-WHERE "StopId" = target
+	
+	with stopdata as (SELECT
+	    parentstation
+	FROM
+	    stops
+	where
+	    id = target
+	)
+	
+	select stop_times.tripid, stop_times.arrivaltime, stop_times.departuretime, stop_times.stopheadsign, stop_times.dataorigin, trips.headsign, trips.shortname, stops.platformcode, trips.serviceid, routes.shortname, routes.longname, agencies.name 
+	from stop_times
+	inner join trips on stop_times.tripid = trips.id
+	inner join stops on stop_times.stopid = stops.id
+	inner join routes on trips.routeid = routes.id
+	inner join agencies on routes.agencyid = agencies.id
+	inner join calendar_dates on trips.serviceid = calendar_dates.serviceid
+	where parentstation = (select parentstation from stopdata limit 1) and stop_times.arrivaltime > fromtime and calendar_dates.date::date = fromdate
+	ORDER BY ArrivalTime asc	
 LIMIT 100;
 
 $BODY$;
 
-ALTER FUNCTION public.get_stop_times_from_stop(text)
+ALTER FUNCTION public.get_stop_times_from_stop(text, time without time zone, date)
     OWNER TO dennis;

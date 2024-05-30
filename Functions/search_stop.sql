@@ -4,7 +4,7 @@
 
 CREATE OR REPLACE FUNCTION public.search_stop(
 	target text)
-    RETURNS TABLE("Id" text, "Name" text, "ParentStation" text) 
+    RETURNS TABLE(id text, name text, parentstation text) 
     LANGUAGE 'sql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -12,8 +12,8 @@ CREATE OR REPLACE FUNCTION public.search_stop(
 
 AS $BODY$
 
-select "Id", "Name", "ParentStation"  from stops
-WHERE ("ParentStation" is null or "ParentStation" = '') AND LOWER("Name") LIKE CONCAT('%', TRIM(target), '%') 
+select id, name, parentstation  from stops
+WHERE (parentstation is null or parentstation = '') AND LOWER(name) LIKE CONCAT('%', TRIM(target), '%') 
 LIMIT 25;
 
 $BODY$;
