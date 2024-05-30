@@ -16,11 +16,20 @@ AS $BODY$
 
 	
 	with stopdata as (SELECT
+	    id
+	FROM
+	    stops
+	where
+	    LOWER(id) = LOWER(target)
+	),
+	stopdata2 as (SELECT
 	    parentstation
 	FROM
 	    stops
 	where
-	    id = target
+	    LOWER(id) = LOWER(target)
+		and
+		parentstation != ''
 	)
 	
 	select stop_times.tripid, stop_times.arrivaltime, stop_times.departuretime, stop_times.stopheadsign, stop_times.dataorigin, trips.headsign, trips.shortname, stops.platformcode, trips.serviceid, routes.shortname, routes.longname, agencies.name 
@@ -30,7 +39,7 @@ AS $BODY$
 	inner join routes on trips.routeid = routes.id
 	inner join agencies on routes.agencyid = agencies.id
 	inner join calendar_dates on trips.serviceid = calendar_dates.serviceid
-	where parentstation = (select parentstation from stopdata limit 1) and stop_times.arrivaltime > fromtime and calendar_dates.date::date = fromdate
+	where (( parentstation != '' and parentstation = COALESCE((select parentstation from stopdata2 limit 1), (select id from stopdata limit 1))) or stopid = (select id from stopdata limit 1)) and stop_times.arrivaltime > fromtime and calendar_dates.date::date = fromdate
 	ORDER BY ArrivalTime asc	
 LIMIT 100;
 
@@ -38,3 +47,5 @@ $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(text, time without time zone, date)
     OWNER TO dennis;
+
+select * from get_stop_times_from_stop('stoparea:18188', '12:34', '2024-05-30');
