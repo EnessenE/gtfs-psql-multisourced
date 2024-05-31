@@ -1,5 +1,10 @@
-CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target text)
-    RETURNS TABLE(sequence bigint, id text, name text, arrivaltime time without time zone, departure time without time zone, platformcode text, stopheadsign text) 
+-- FUNCTION: public.get_stop_times_for_trip(text)
+
+DROP FUNCTION IF EXISTS public.get_stop_times_for_trip(text);
+
+CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(
+	target text)
+    RETURNS TABLE(sequence bigint, id text, name text, arrival time without time zone, departure time without time zone, platformcode text, stopheadsign text, latitude double precision, longitude double precision) 
     LANGUAGE 'sql'
     COST 100
     VOLATILE PARALLEL UNSAFE
@@ -13,7 +18,9 @@ SELECT
     stop_times.arrivaltime,
     stop_times.departuretime,
 	stops.platformcode,
-	stop_times.stopheadsign
+	stop_times.stopheadsign,
+	stops.latitude, 
+	stops.longitude
 FROM
     stop_times
 JOIN
@@ -24,4 +31,5 @@ ORDER BY
     stop_times.stopsequence;
 $BODY$;
 
-SELECT * FROM public.get_stop_times_for_trip('88____:A71::8821006:8822715:10:723:20240907')
+ALTER FUNCTION public.get_stop_times_for_trip(text)
+    OWNER TO dennis;
