@@ -22,23 +22,27 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, from_tim
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
-    WITH stop_data AS(
+    WITH primary_stop_data AS(
         SELECT
-            id
+            primary_stop
         FROM
-            stops
+            related_stops
         WHERE
-            LOWER(id) = LOWER(target)
+            primary_stop = target
+            OR related_stop = target
+        LIMIT 1
 ),
-stop_data2 AS(
+stop_data AS(
     SELECT
-        parent_station
+        related_stop
     FROM
-        stops
+        related_stops
     WHERE
-        LOWER(id) = LOWER(target)
-        AND parent_station != ''
-)
+        primary_stop =(
+            SELECT
+                primary_stop
+            FROM
+                primary_stop_data))
 SELECT
     stop_times.trip_id,
     stop_times.arrival_time,
@@ -66,38 +70,29 @@ FROM
     INNER JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
 WHERE
     -- parent_station / station filter
-((parent_station != ''
-            AND parent_station = COALESCE((
-                SELECT
-                    parent_station
-                FROM stop_data2 LIMIT 1),(
+    stop_id IN(
+        SELECT
+            related_stop
+        FROM
+            stop_data)
+        -- Date filter
+        AND((stop_times.arrival_time >= from_time
+                AND calendar_dates.date::date = from_date)
+            OR(stop_times.arrival_time <= from_time - INTERVAL '12 hours'
+                AND calendar_dates.date::date = from_date + INTERVAL '1 day'))
+        --Prevent showing the trip if the current stop is the last stop
+        AND EXISTS(
             SELECT
-                id
-            FROM stop_data LIMIT 1)))
-        OR stop_id =(
-            SELECT
-                id
+                1
             FROM
-                stop_data
-            LIMIT 1))
-    -- Date filter
-    AND((stop_times.arrival_time >= from_time
-            AND calendar_dates.date::date = from_date)
-        OR(stop_times.arrival_time <= from_time - INTERVAL '12 hours'
-            AND calendar_dates.date::date = from_date + INTERVAL '1 day'))
---Prevent showing the trip if the current stop is the last stop
-AND EXISTS(
-    SELECT
-        1
-    FROM
-        stop_times st2
-    WHERE
-        st2.trip_id = stop_times.trip_id
-        AND st2.stop_sequence > stop_times.stop_sequence)
-ORDER BY
-    calendar_dates.date::date,
-    arrival_time ASC
-LIMIT 100;
+                stop_times st2
+            WHERE
+                st2.trip_id = stop_times.trip_id
+                AND st2.stop_sequence > stop_times.stop_sequence)
+    ORDER BY
+        calendar_dates.date::date,
+        arrival_time ASC
+    LIMIT 100;
 $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(text, time WITHOUT time zone, date) OWNER TO dennis;
@@ -105,5 +100,5 @@ ALTER FUNCTION public.get_stop_times_from_stop(text, time WITHOUT time zone, dat
 SELECT
     *
 FROM
-    get_stop_times_from_stop('stoparea:18188', '23:34', '2024-05-30');
+    get_stop_times_from_stop('2612067', '23:34', '2024-05-30');
 

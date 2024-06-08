@@ -11,15 +11,16 @@ CREATE OR REPLACE FUNCTION public.get_shapes_from_trip(target text)
         COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
         AS $BODY$
     SELECT
-        id,
+        shapes.id,
         latitude,
         longitude,
         SEQUENCE,
         distance_travelled,
-        data_origin
+        shapes.data_origin
     FROM
         shapes
+        INNER JOIN trips ON trips.shape_id = shapes.id
     WHERE
-        id = target
+        LOWER(trips.id) = LOWER(target)
 $BODY$;
 
