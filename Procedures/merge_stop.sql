@@ -1,9 +1,10 @@
--- PROCEDURE: public.merge_stop(text)
+-- PROCEDURE: public.merge_stop(text, text)
 
--- DROP PROCEDURE IF EXISTS public.merge_stop(text);
+-- DROP PROCEDURE IF EXISTS public.merge_stop(text, text);
 
 CREATE OR REPLACE PROCEDURE public.merge_stop(
-	IN target text, IN supplier text)
+	IN target text,
+	IN supplier text)
 LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
@@ -30,11 +31,12 @@ BEGIN
     FOR temprow IN
         SELECT *
         FROM stops
-        WHERE stops.parent_station = stopdata.id
+        WHERE (stops.parent_station = stopdata.id
         OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 500, FALSE)
             AND SIMILARITY(stopdata.name, stops.name) >= 0.3)
             OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE)
-            AND SIMILARITY(stopdata.name, stops.name) >= 0.7)
+            AND SIMILARITY(stopdata.name, stops.name) >= 0.7))
+		--AND stopdata.stop_type = stops.stop_type
     LOOP
         -- Check if temprow is already a related_stop in the related_stops table
         IF EXISTS (
@@ -57,4 +59,4 @@ $BODY$;
 ALTER PROCEDURE public.merge_stop(text, text)
     OWNER TO dennis;
 
-CALL merge_stop('8015345', 'NMBS')
+call merge_stop ('1536304', 'OpenOV')

@@ -1,5 +1,5 @@
 -- FUNCTION: public.get_trip_from_id(text)
--- DROP FUNCTION IF EXISTS public.get_trip_from_id(text);
+DROP FUNCTION IF EXISTS public.get_trip_from_id(text);
 CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text)
     RETURNS TABLE(
         id text,
@@ -12,7 +12,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text)
         location_type text,
         parent_station text,
         platform_code text,
-        data_origin text)
+        data_origin text,
+        stop_type int)
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1
     AS $BODY$
@@ -27,7 +28,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text)
         location_type,
         parent_station,
         platform_code,
-        data_origin
+        data_origin,
+        stop_type
     FROM
         stops
     WHERE

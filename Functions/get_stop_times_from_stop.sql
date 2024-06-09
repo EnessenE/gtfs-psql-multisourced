@@ -1,5 +1,5 @@
 -- FUNCTION: public.get_stop_times_from_stop(text, time without time zone, date)
--- DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, time without time zone, date);
+DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, time without time zone, date);
 CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, from_time time without time zone, from_date date)
     RETURNS TABLE(
         trip_id text,
@@ -18,7 +18,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, from_tim
         route_type text,
         route_desc text,
         route_color text,
-        route_text_color text)
+        route_text_color text,
+        stop_type int)
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
@@ -60,7 +61,8 @@ SELECT
     routes.type,
     routes.description,
     routes.color,
-    routes.text_color
+    routes.text_color,
+    stops.stop_type
 FROM
     stop_times
     INNER JOIN trips ON stop_times.trip_id = trips.id
@@ -70,11 +72,17 @@ FROM
     INNER JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
 WHERE
     -- parent_station / station filter
-    stop_id IN(
+    (stop_id IN(
         SELECT
             related_stop
         FROM
             stop_data)
+        or stop_id IN(
+        SELECT
+            primary_stop
+        FROM
+            primary_stop_data)
+            )
         -- Date filter
         AND((stop_times.arrival_time >= from_time
                 AND calendar_dates.date::date = from_date)
