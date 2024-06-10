@@ -7,27 +7,30 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target text)
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
     WITH stop_data AS(
-        SELECT
+        SELECT 
             id,
             stop_type
         FROM
             stops
         WHERE
             lower(id) = lower(target))
+    SELECT distinct
+		primary_stop id,
+        name,
+        stop_type
+    FROM
+        related_stops
+        INNER JOIN stops ON related_stops.related_stop = stops.id
+    WHERE(lower(primary_stop) = lower(target)
+        OR lower(related_stop) = lower(target))
+    AND stop_type !=(
         SELECT
-            id,
-			name,
             stop_type
         FROM
-            related_stops
-        INNER JOIN stops ON related_stops.related_stop = stops.id
-        WHERE
-            (lower(primary_stop) = lower(target) or lower(related_stop) = lower(target))
-			and stop_type != (select stop_type from stop_data)
+            stop_data)
 $BODY$;
 
 ALTER FUNCTION public.get_related_stops(text) OWNER TO dennis;
-
 SELECT
     *
 FROM

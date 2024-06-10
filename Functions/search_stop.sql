@@ -4,7 +4,7 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
     RETURNS TABLE(
         id text,
         name text,
-        stop_type int)
+        stop_type int) q
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
@@ -14,9 +14,9 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
         stops.stop_type
     FROM
         public.related_stops
-        INNER JOIN stops ON related_stops.primary_stop = stops.id
+        INNER JOIN stops ON related_stops.primary_stop = stops.id and related_stops.primary_data_origin = stops.data_origin
     WHERE
-        SIMILARITY(LOWER(stops.name), LOWER(target)) >= 0.4
+        SIMILARITY(LOWER(stops.name), LOWER(target)) >= 0.7
     LIMIT 25;
 $BODY$;
 
