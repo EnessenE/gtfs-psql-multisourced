@@ -1,6 +1,5 @@
 -- FUNCTION: public.get_trip_from_id(text)
-DROP FUNCTION IF EXISTS public.get_trip_from_id(text);
-CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text)
+CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text, target_stop_type int)
     RETURNS TABLE(
         id text,
         code text,
@@ -30,11 +29,20 @@ CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text)
         platform_code,
         data_origin,
         stop_type
-    FROM
-        stops
+	FROM
+		related_stops
+		INNER JOIN stops ON related_stops.related_stop = stops.id and related_stops.related_data_origin = stops.data_origin
     WHERE
-        id = target
+        (primary_stop = target
+        and
+        stop_type = target_stop_type)
+        or 
+        (related_stop = target
+        and
+        stop_type = target_stop_type)
+	limit 1
 $BODY$;
 
-ALTER FUNCTION public.get_stop_from_id(text) OWNER TO dennis;
+ALTER FUNCTION public.get_stop_from_id(text, int) OWNER TO dennis;
 
+select * from get_stop_from_id('2510141', 3)

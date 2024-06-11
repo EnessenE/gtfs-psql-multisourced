@@ -1,7 +1,5 @@
 -- FUNCTION: public.get_stop_times_from_stop(text, time without time zone, date)
-DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, time WITHOUT time zone, date);
-
-CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, from_time time without time zone, from_date date)
+CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, target_stop_type int, from_time time without time zone, from_date date)
     RETURNS TABLE(
         trip_id text,
         arrival_time time without time zone,
@@ -27,26 +25,23 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, from_tim
     WITH secondary_stop_data AS(
         SELECT
             primary_stop,
-            related_stop,
-            stop_type
+            related_stop
         FROM
             related_stops
             INNER JOIN stops ON related_stops.related_stop = stops.id
         WHERE
-            primary_stop = target
-            OR related_stop = target
+            (primary_stop = target
+            OR related_stop = target)
         LIMIT 1),
 	primary_stop_data AS(
         SELECT
             primary_stop,
-            related_stop,
-            stop_type
+            related_stop
         FROM
             related_stops
             INNER JOIN stops ON related_stops.related_stop = stops.id
         WHERE
             primary_stop = (select primary_stop from secondary_stop_data)
-			and stop_type = (select stop_type from secondary_stop_data)
 )
 SELECT
     stop_times.trip_id,
@@ -82,11 +77,8 @@ WHERE
             FROM
                 primary_stop_data))
         -- stop type filter
-        AND(stop_type IN(
-                SELECT
-                    stop_type
-                FROM
-                    primary_stop_data))
+        
+            and stop_type = target_stop_type
                 -- Date filter
                 AND((stop_times.arrival_time >= from_time
                         AND calendar_dates.date::date = from_date)
@@ -107,10 +99,10 @@ WHERE
         LIMIT 100;
 $BODY$;
 
-ALTER FUNCTION public.get_stop_times_from_stop(text, time WITHOUT time zone, date) OWNER TO dennis;
+ALTER FUNCTION public.get_stop_times_from_stop(text, int, time WITHOUT time zone, date) OWNER TO dennis;
 
 SELECT
     *
 FROM
-    get_stop_times_from_stop('2510515', '23:34', '2024-05-30');
+    get_stop_times_from_stop('2510141', 1, '23:34', '2024-05-30');
 

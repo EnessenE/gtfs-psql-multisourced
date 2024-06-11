@@ -34,4 +34,4 @@ ALTER FUNCTION public.get_related_stops(text) OWNER TO dennis;
 SELECT
     *
 FROM
-    public.get_related_stops('2510521')
+    public.get_related_stops('2510141')

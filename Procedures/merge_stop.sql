@@ -32,13 +32,19 @@ BEGIN
         *
     FROM
         stops
-    WHERE (stops.parent_station = stopdata.id
-        OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE)
+    WHERE ((stops.parent_station = stopdata.id
+        OR stops.id = stopdata.parent_station)
+        OR ((ST_DWithin(stops.geo_location, stopdata.geo_location, 50, FALSE))
+        OR
+            (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE)
             AND SIMILARITY(stopdata.name, stops.name) >= 0.3)
-        OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 500, FALSE)
+        OR 
+            (ST_DWithin(stops.geo_location, stopdata.geo_location, 400, FALSE)
             AND SIMILARITY(stopdata.name, stops.name) >= 0.6)
-        OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE)
+        OR 
+            (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE)
             AND SIMILARITY(stopdata.name, stops.name) >= 0.9))
+            )
     --AND stopdata.stop_type = stops.stop_type
     LOOP
         -- Check if temprow is already a related_stop in the related_stops table
@@ -50,12 +56,12 @@ BEGIN
             WHERE
                 related_stop = temprow.id) THEN
         -- Update the primary_stop to the target stop
-        INSERT INTO public.related_stops(primary_stop, primary_data_origin, related_stop, related_data_origin)
-            VALUES (temprow.id, temprow.data_origin, stopdata.id, stopdata.data_origin);
-    ELSE
-        -- Insert into related_stops
-        INSERT INTO public.related_stops(primary_stop, primary_data_origin, related_stop, related_data_origin)
-            VALUES (stopdata.id, stopdata.data_origin, temprow.id, temprow.data_origin)
+            INSERT INTO public.related_stops(primary_stop, primary_data_origin, related_stop, related_data_origin)
+                VALUES (temprow.id, temprow.data_origin, stopdata.id, stopdata.data_origin);
+        ELSE
+            -- Insert into related_stops
+            INSERT INTO public.related_stops(primary_stop, primary_data_origin, related_stop, related_data_origin)
+                VALUES (stopdata.id, stopdata.data_origin, temprow.id, temprow.data_origin)
         ON CONFLICT
             DO NOTHING;
     END IF;

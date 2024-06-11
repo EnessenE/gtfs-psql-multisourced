@@ -12,7 +12,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target text)
             platform_code text,
             stop_headsign text,
             latitude double precision,
-            longitude double precision)
+            longitude double precision,
+            stop_type int)
         LANGUAGE 'sql'
         COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
         AS $BODY$
@@ -25,7 +26,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target text)
         stops.platform_code,
         stop_times.stop_headsign,
         stops.latitude,
-        stops.longitude
+        stops.longitude,
+        stops.stop_type
     FROM
         stop_times
         JOIN stops ON stop_times.stop_id = stops.id
