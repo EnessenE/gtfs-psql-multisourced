@@ -21,7 +21,7 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target text)
         stop_times.stop_sequence,
 (
             SELECT
-                related_stop
+                primary_stop
             FROM
                 related_stops
             WHERE(stops.id = related_stops.related_stop

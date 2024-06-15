@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target text)
         FROM
             related_stops
         WHERE
-            lower(primary_stop) = lower(target))
+            lower(primary_stop) = lower(target) limit 1)
     SELECT distinct
 		primary_stop id,
         name,
