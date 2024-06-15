@@ -8,21 +8,19 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target text)
     AS $BODY$
     WITH stop_data AS(
         SELECT 
-            id,
-            stop_type
+            related_stop
         FROM
-            stops
+            related_stops
         WHERE
-            lower(id) = lower(target))
+            lower(primary_stop) = lower(target))
     SELECT distinct
 		primary_stop id,
         name,
         stop_type
     FROM
         related_stops
-        INNER JOIN stops ON related_stops.related_stop = stops.id
-    WHERE(lower(primary_stop) = lower(target)
-        OR lower(related_stop) = lower(target))
+        INNER JOIN stops ON related_stops.related_stop = stops.id and related_stops.related_data_origin = stops.data_origin
+    WHERE(lower(primary_stop) = lower(target))
     AND stop_type !=(
         SELECT
             stop_type

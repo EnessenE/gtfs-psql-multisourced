@@ -6,7 +6,10 @@ AS $BODY$
 DECLARE
     stopdata RECORD;
     temprow RECORD;
+    chosen_guid text;
 BEGIN
+    SELECT
+        uuid_generate_v4()::text INTO chosen_guid;
     -- Get stopdata record
     SELECT
         * INTO stopdata
@@ -20,8 +23,8 @@ BEGIN
                 1
             FROM
                 related_stops
-            WHERE (primary_stop = target
-                OR related_stop = target));
+            WHERE (related_stop = target
+                AND related_data_origin = supplier));
     IF NOT FOUND THEN
         RAISE NOTICE 'Target stop does not exist or is already related.';
         RETURN;
@@ -33,18 +36,14 @@ BEGIN
     FROM
         stops
     WHERE ((stops.parent_station = stopdata.id
-        OR stops.id = stopdata.parent_station)
+            OR stops.id = stopdata.parent_station)
         OR ((ST_DWithin(stops.geo_location, stopdata.geo_location, 50, FALSE))
-        OR
-            (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE)
-            AND SIMILARITY(stopdata.name, stops.name) >= 0.3)
-        OR 
-            (ST_DWithin(stops.geo_location, stopdata.geo_location, 400, FALSE)
-            AND SIMILARITY(stopdata.name, stops.name) >= 0.6)
-        OR 
-            (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE)
-            AND SIMILARITY(stopdata.name, stops.name) >= 0.9))
-            )
+            OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE)
+                AND SIMILARITY(stopdata.name, stops.name) >= 0.3)
+            OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 400, FALSE)
+                AND SIMILARITY(stopdata.name, stops.name) >= 0.6)
+            OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE)
+                AND SIMILARITY(stopdata.name, stops.name) >= 0.9)))
     --AND stopdata.stop_type = stops.stop_type
     LOOP
         -- Check if temprow is already a related_stop in the related_stops table
@@ -55,13 +54,31 @@ BEGIN
                 related_stops
             WHERE
                 related_stop = temprow.id) THEN
-        -- Update the primary_stop to the target stop
-            INSERT INTO public.related_stops(primary_stop, primary_data_origin, related_stop, related_data_origin)
-                VALUES (temprow.id, temprow.data_origin, stopdata.id, stopdata.data_origin);
-        ELSE
-            -- Insert into related_stops
-            INSERT INTO public.related_stops(primary_stop, primary_data_origin, related_stop, related_data_origin)
-                VALUES (stopdata.id, stopdata.data_origin, temprow.id, temprow.data_origin)
+        RAISE NOTICE 'Inserting: %',(
+            SELECT
+                primary_stop
+            FROM
+                related_stops
+            WHERE
+                related_stop = temprow.id
+            LIMIT 1);
+        -- Add from the primary_stop for the target stop
+        INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
+            VALUES ((
+                    SELECT
+                        primary_stop
+                    FROM
+                        related_stops
+                    WHERE
+                        related_stop = temprow.id
+                    LIMIT 1),
+                stopdata.id,
+                stopdata.data_origin);
+        RETURN;
+    ELSE
+        -- Insert into related_stops
+        INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
+            VALUES (chosen_guid, temprow.id, temprow.data_origin)
         ON CONFLICT
             DO NOTHING;
     END IF;
@@ -71,3 +88,4 @@ $BODY$;
 
 ALTER PROCEDURE public.merge_stop(text, text) OWNER TO dennis;
 
+CALL public.merge_stop('2612455', 'OpenOV')

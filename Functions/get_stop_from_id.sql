@@ -36,10 +36,6 @@ CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text, target_stop_type
         (primary_stop = target
         and
         stop_type = target_stop_type)
-        or 
-        (related_stop = target
-        and
-        stop_type = target_stop_type)
 	limit 1
 $BODY$;
 
