@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.get_related_stops(target text)
+CREATE OR REPLACE FUNCTION public.get_related_stops(target text, target_stop_type int)
     RETURNS TABLE(
         id text,
         name text,
@@ -21,11 +21,7 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target text)
         related_stops
         INNER JOIN stops ON related_stops.related_stop = stops.id and related_stops.related_data_origin = stops.data_origin
     WHERE(lower(primary_stop) = lower(target))
-    AND stop_type !=(
-        SELECT
-            stop_type
-        FROM
-            stop_data)
+    AND (stop_type != target_stop_type AND stop_type != 1000 )
 $BODY$;
 
 ALTER FUNCTION public.get_related_stops(text) OWNER TO dennis;

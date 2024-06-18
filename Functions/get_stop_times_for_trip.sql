@@ -38,11 +38,13 @@ stops.stop_type
 FROM
     stop_times
     JOIN stops ON stop_times.stop_id = stops.id
+    JOIN trips ON trips.id = stop_times.trip_id
 WHERE
-    stop_times.trip_id = target
+    trips.internal_id::text = target
+	AND NOT (pickup_type = 1 and drop_off_type = 1 )
+	
 ORDER BY
     stop_times.stop_sequence;
 $BODY$;
 
 ALTER FUNCTION public.get_stop_times_for_trip(text) OWNER TO dennis;
-

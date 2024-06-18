@@ -16,9 +16,12 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
         primary_stop
     FROM
         public.related_stops
-        INNER JOIN stops ON related_stops.related_stop = stops.id
+        INNER JOIN related_stops ON related_stops.related_stop = stops.
     WHERE
-        SIMILARITY(LOWER(stops.name), LOWER(target)) >= 0.7
+        SIMILARITY(LOWER(stops.name), LOWER(target)) >= 0.3
+        and 
+        stop_type != 1000
+    GROUP BY stops.name    
     LIMIT 25;
 $BODY$;
 
@@ -27,4 +30,4 @@ ALTER FUNCTION public.search_stop(text) OWNER TO dennis;
 SELECT
     *
 FROM
-    public.search_stop('kome')
+    public.search_stop('Dordrecht')

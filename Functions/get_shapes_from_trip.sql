@@ -21,6 +21,7 @@ CREATE OR REPLACE FUNCTION public.get_shapes_from_trip(target text)
         shapes
         INNER JOIN trips ON trips.shape_id = shapes.id
     WHERE
-        LOWER(trips.id) = LOWER(target)
+        LOWER(trips.internal_id::text) = LOWER(target)
+    ORDER BY sequence DESC
 $BODY$;
 
