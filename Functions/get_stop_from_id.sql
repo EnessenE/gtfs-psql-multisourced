@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text, target_stop_type
         stop_type
 	FROM
 		related_stops
-		INNER JOIN stops ON related_stops.related_stop = stops.id and related_stops.related_data_origin = stops.data_origin
+		INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text and related_stops.related_data_origin = stops.data_origin
     WHERE
         (primary_stop = target
         and

@@ -10,18 +10,20 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
     SELECT DISTINCT
-        id,
+        'nvt',
         stops.name,
         stops.stop_type,
         primary_stop
     FROM
         public.related_stops
-        INNER JOIN related_stops ON related_stops.related_stop = stops.
+        INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text
     WHERE
-        SIMILARITY(LOWER(stops.name), LOWER(target)) >= 0.3
+        SIMILARITY(stops.name, LOWER(target)) >= 0.3
         and 
         stop_type != 1000
-    GROUP BY stops.name    
+    GROUP BY stops.name,
+        stops.stop_type,
+        primary_stop    
     LIMIT 25;
 $BODY$;
 

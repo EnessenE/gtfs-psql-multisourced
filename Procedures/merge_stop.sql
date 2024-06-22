@@ -78,7 +78,7 @@ BEGIN
     ELSE
         -- Insert into related_stops
         INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
-            VALUES (chosen_guid, temprow.id, temprow.data_origin)
+            VALUES (chosen_guid, temprow.internal_id, temprow.data_origin)
         ON CONFLICT
             DO NOTHING;
     END IF;

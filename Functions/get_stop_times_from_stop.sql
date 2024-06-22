@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target text, target_s
             related_stop
         FROM
             related_stops
-            INNER JOIN stops ON related_stops.related_stop = stops.id
+            INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text
         WHERE(primary_stop = target
             OR related_stop = target)
     LIMIT 1
@@ -39,7 +39,7 @@ primary_stop_data AS(
         related_stop
     FROM
         related_stops
-        INNER JOIN stops ON related_stops.related_stop = stops.id
+        INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text
     WHERE
         primary_stop =(
             SELECT
@@ -77,9 +77,8 @@ FROM
         AND stop_times.data_origin = agencies.data_origin
     INNER JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
 WHERE
-		routes.data_origin = 'flixbus' and
     -- parent_station / station filter
-(stop_id = ANY(
+(stops.internal_id::text = ANY(
             SELECT
                 related_stop
             FROM
@@ -106,10 +105,8 @@ WHERE
     LIMIT 100;
 $BODY$;
 
-ALTER FUNCTION public.get_stop_times_from_stop(text, int, time WITHOUT time zone, date) OWNER TO dennis;
-
+ALTER FUNCTION public.get_stop_times_from_stop(text, int, time WITHOUT time zone, date) OWNER TO dennis
 SELECT
     *
 FROM
-    get_stop_times_from_stop('2510141', 1, '23:34', '2024-05-30');
-
+    get_stop_times_from_stop('4a340208-d3fd-4029-a35d-29675bb0ea76', 2, '17:40', '2024-06-22');

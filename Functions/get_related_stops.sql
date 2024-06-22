@@ -19,13 +19,9 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target text, target_stop_typ
         stop_type
     FROM
         related_stops
-        INNER JOIN stops ON related_stops.related_stop = stops.id and related_stops.related_data_origin = stops.data_origin
+        INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text and related_stops.related_data_origin = stops.data_origin
     WHERE(lower(primary_stop) = lower(target))
     AND (stop_type != target_stop_type AND stop_type != 1000 )
 $BODY$;
 
-ALTER FUNCTION public.get_related_stops(text) OWNER TO dennis;
-SELECT
-    *
-FROM
-    public.get_related_stops('2510141')
+ALTER FUNCTION public.get_related_stops(text, int) OWNER TO dennis;

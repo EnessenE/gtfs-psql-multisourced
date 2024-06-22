@@ -23,6 +23,6 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target text)
     FROM
         trips
     WHERE
-        internal_id = target
+        internal_id::text = target
 $BODY$;
 
