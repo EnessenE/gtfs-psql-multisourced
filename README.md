@@ -7,6 +7,7 @@ For example:
 - Data is imported from data supplier 4 for country 1 and 2
 - Data is imported from data supplier 5 for country 2 and 3
 - Data is imported from data supplier 6 for country 1
+<br>
 All data imported should be available, uniquely distinguishable and easily/quickly reachable.<br>
 <br>
 
