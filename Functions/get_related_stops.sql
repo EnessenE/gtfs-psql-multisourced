@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.get_related_stops(target text, target_stop_type int)
+CREATE OR REPLACE FUNCTION public.get_related_stops(target uuid, target_stop_type int)
     RETURNS TABLE(
         id text,
         name text,
@@ -12,16 +12,16 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target text, target_stop_typ
         FROM
             related_stops
         WHERE
-            lower(primary_stop) = lower(target) limit 1)
+            primary_stop = target limit 1)
     SELECT distinct
 		primary_stop id,
         name,
         stop_type
     FROM
         related_stops
-        INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text and related_stops.related_data_origin = stops.data_origin
-    WHERE(lower(primary_stop) = lower(target))
+        INNER JOIN stops ON related_stops.related_stop = stops.internal_id and related_stops.related_data_origin = stops.data_origin
+    WHERE(primary_stop = target)
     AND (stop_type != target_stop_type AND stop_type != 1000 )
 $BODY$;
 
-ALTER FUNCTION public.get_related_stops(text, int) OWNER TO dennis;
+ALTER FUNCTION public.get_related_stops(uuid, int) OWNER TO dennis;

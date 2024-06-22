@@ -1,5 +1,5 @@
 -- FUNCTION: public.get_trip_from_id(text)
-CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text, target_stop_type int)
+CREATE OR REPLACE FUNCTION public.get_stop_from_id(target uuid, target_stop_type int)
     RETURNS TABLE(
         id text,
         code text,
@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION public.get_stop_from_id(target text, target_stop_type
         stop_type
 	FROM
 		related_stops
-		INNER JOIN stops ON related_stops.related_stop = stops.internal_id::text and related_stops.related_data_origin = stops.data_origin
+		INNER JOIN stops ON related_stops.related_stop = stops.internal_id and related_stops.related_data_origin = stops.data_origin
     WHERE
         (primary_stop = target
         and
@@ -41,4 +41,3 @@ $BODY$;
 
 ALTER FUNCTION public.get_stop_from_id(text, int) OWNER TO dennis;
 
-select * from get_stop_from_id('2510141', 3)

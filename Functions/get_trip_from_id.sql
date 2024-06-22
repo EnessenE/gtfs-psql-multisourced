@@ -1,4 +1,6 @@
-CREATE OR REPLACE FUNCTION public.get_trip_from_id(target text)
+DROP FUNCTION IF EXISTS public.get_trip_from_id(target text);
+
+CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
     RETURNS TABLE(
         id text,
         route_id text,
@@ -23,6 +25,6 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target text)
     FROM
         trips
     WHERE
-        internal_id::text = target
+        internal_id = target
 $BODY$;
 

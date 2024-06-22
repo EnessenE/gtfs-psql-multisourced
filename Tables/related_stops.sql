@@ -4,8 +4,8 @@
 
 CREATE TABLE IF NOT EXISTS public.related_stops
 (
-    primary_stop text COLLATE pg_catalog."default" NOT NULL,
-    related_stop text COLLATE pg_catalog."default" NOT NULL,
+    primary_stop uuid COLLATE pg_catalog."default" NOT NULL,
+    related_stop uuid COLLATE pg_catalog."default" NOT NULL,
     related_data_origin text COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT related_stops_pkey PRIMARY KEY (primary_stop, related_stop, related_data_origin)
 )

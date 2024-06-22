@@ -1,7 +1,7 @@
 -- FUNCTION: public.get_stop_times_for_trip(text)
 DROP FUNCTION IF EXISTS public.get_stop_times_for_trip(text);
 
-CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target text)
+CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
     RETURNS TABLE(
         SEQUENCE bigint
 ,
@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target text)
                 primary_stop
             FROM
                 related_stops
-            WHERE(stops.internal_id::text = related_stops.related_stop
+            WHERE(stops.internal_id = related_stops.related_stop
                 AND stops.data_origin = related_stops.related_data_origin)
         LIMIT 1) AS id,
 stops.name,
@@ -40,12 +40,12 @@ FROM
     JOIN stops ON stop_times.stop_id = stops.id
     JOIN trips ON trips.id = stop_times.trip_id
 WHERE
-    trips.internal_id::text = target
+    trips.internal_id = target
     AND NOT(pickup_type = 1
         AND drop_off_type = 1)
 ORDER BY
     stop_times.stop_sequence;
 $BODY$;
 
-ALTER FUNCTION public.get_stop_times_for_trip(text) OWNER TO dennis;
+ALTER FUNCTION public.get_stop_times_for_trip(uuid) OWNER TO dennis;
 

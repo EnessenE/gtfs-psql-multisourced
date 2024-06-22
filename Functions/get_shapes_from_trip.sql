@@ -1,4 +1,5 @@
-CREATE OR REPLACE FUNCTION public.get_shapes_from_trip(target text)
+DROP FUNCTION IF EXISTS public.get_shapes_from_trip(text);
+CREATE OR REPLACE FUNCTION public.get_shapes_from_trip(target uuid)
     RETURNS TABLE(
         id text,
         latitude double precision,
@@ -21,7 +22,8 @@ CREATE OR REPLACE FUNCTION public.get_shapes_from_trip(target text)
         shapes
         INNER JOIN trips ON trips.shape_id = shapes.id
     WHERE
-        LOWER(trips.internal_id::text) = LOWER(target)
-    ORDER BY sequence DESC
+        trips.internal_id = target
+    ORDER BY
+        SEQUENCE DESC
 $BODY$;
 
