@@ -6,10 +6,10 @@ AS $BODY$
 DECLARE
     stopdata RECORD;
     temprow RECORD;
-    chosen_guid text;
+    chosen_guid uuid;
 BEGIN
     SELECT
-        uuid_generate_v4()::text INTO chosen_guid;
+        uuid_generate_v4() INTO chosen_guid;
     -- Get stopdata record
     SELECT
         * INTO stopdata
@@ -23,7 +23,8 @@ BEGIN
                 1
             FROM
                 related_stops
-            WHERE (related_stop = target
+            inner join stops on stops.internal_id = related_stops.related_stop
+            WHERE (stops.id = target
                 AND related_data_origin = supplier));
     IF NOT FOUND THEN
         RAISE NOTICE 'Target stop does not exist or is already related.';
@@ -53,14 +54,14 @@ BEGIN
             FROM
                 related_stops
             WHERE
-                related_stop = temprow.id) THEN
+                related_stop = temprow.internal_id) THEN
         RAISE NOTICE 'Inserting: %',(
             SELECT
                 primary_stop
             FROM
                 related_stops
             WHERE
-                related_stop = temprow.id
+                related_stop = temprow.internal_id
             LIMIT 1);
         -- Add from the primary_stop for the target stop
         INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
@@ -70,7 +71,7 @@ BEGIN
                     FROM
                         related_stops
                     WHERE
-                        related_stop = temprow.id
+                        related_stop = temprow.internal_id
                     LIMIT 1),
                 stopdata.id,
                 stopdata.data_origin);
