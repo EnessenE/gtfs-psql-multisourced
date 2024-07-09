@@ -4,10 +4,10 @@ CREATE OR REPLACE PROCEDURE public.update_supplier_for_download(IN target text, 
 LANGUAGE 'plpgsql'
 AS $BODY$
 BEGIN
-    UPDATE SupplierConfigurations
+    UPDATE supplier_configurations
     SET 
         last_updated = last_update,
-        download_pending = marked
+        download_pending = pending
     WHERE 
         name = target;
 END;
