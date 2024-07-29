@@ -9,7 +9,7 @@ BEGIN
         last_updated = last_update,
         download_pending = pending
     WHERE 
-        name = target;
+        lower(name) = lower(target);
 END;
 $BODY$;
 
