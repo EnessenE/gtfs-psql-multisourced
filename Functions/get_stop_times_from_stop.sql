@@ -59,9 +59,9 @@ valid_trips AS (
         routes.text_color,
         agencies.name AS agency_name
     FROM trips
-    INNER JOIN routes ON trips.route_id = routes.id
+    RIGHT JOIN routes ON trips.route_id = routes.id
         AND trips.data_origin = routes.data_origin
-    INNER JOIN agencies ON routes.agency_id = agencies.id
+    RIGHT JOIN agencies ON routes.agency_id = agencies.id
         AND routes.data_origin = agencies.data_origin
 	WHERE trips.id = ANY(SELECT filtered_stop_times.trip_id FROM filtered_stop_times)
 ),
@@ -100,8 +100,8 @@ INNER JOIN stops ON fst.stop_id = stops.id
 INNER JOIN service_dates ON valid_trips.service_id = service_dates.service_id
     AND valid_trips.data_origin = service_dates.data_origin
 WHERE
-    ((fst.arrival_time >= from_time::time AND service_dates.date::date >= from_date::date)
-    OR (service_dates.date::date > from_date::date))
+   (( (fst.arrival_time + service_dates.date) AT time zone 'Europe/Amsterdam') AT time zone 'UTC') >= (from_time::time + from_date::date)
+	
     AND EXISTS (
         SELECT 1
         FROM stop_times st2 
@@ -112,11 +112,12 @@ WHERE
 ORDER BY
     service_dates.date::date,
     fst.arrival_time ASC
-LIMIT 100;
+LIMIT 50;
 
 $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(uuid, int, time WITHOUT time zone, date) OWNER TO dennis;
 
-SELECT * FROM get_stop_times_from_stop('4a340208-d3fd-4029-a35d-29675bb0ea76'::uuid, 1, '17:40'::time without time zone, '2024-06-22'::date);
+SELECT * FROM get_stop_times_from_stop('e949b99e-d1a0-49b6-930a-ee54ff1606aa'::uuid, 1, '08:01'::time without time zone, '2024-07-29'::date);
 
+select * from related_stops where primary_stop = 'e949b99e-d1a0-49b6-930a-ee54ff1606aa'::uuid
