@@ -9,7 +9,7 @@ DECLARE
     chosen_guid uuid;
 BEGIN
     SELECT
-        uuid_generate_v4() INTO chosen_guid;
+        uuid_generate_v4()::uuid INTO chosen_guid;
     -- Get stopdata record
     SELECT
         * INTO stopdata
@@ -73,7 +73,7 @@ BEGIN
                     WHERE
                         related_stop = temprow.internal_id
                     LIMIT 1),
-                stopdata.id,
+                stopdata.internal_id,
                 stopdata.data_origin);
         RETURN;
     ELSE
@@ -89,4 +89,4 @@ $BODY$;
 
 ALTER PROCEDURE public.merge_stop(text, text) OWNER TO dennis;
 
-CALL public.merge_stop('2612455', 'OpenOV')
+CALL public.merge_stop('2470857', 'OpenOV')
