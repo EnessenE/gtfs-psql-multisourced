@@ -38,8 +38,10 @@ BEGIN
         stops
     WHERE ((stops.parent_station = stopdata.id
             OR stops.id = stopdata.parent_station)
-        OR ((ST_DWithin(stops.geo_location, stopdata.geo_location, 50, FALSE))
+        OR ((ST_DWithin(stops.geo_location, stopdata.geo_location, 75, FALSE))
             OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE)
+                AND SIMILARITY(stopdata.name, stops.name) >= 0.2)
+            OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 350, FALSE)
                 AND SIMILARITY(stopdata.name, stops.name) >= 0.3)
             OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 400, FALSE)
                 AND SIMILARITY(stopdata.name, stops.name) >= 0.6)
@@ -88,5 +90,3 @@ END;
 $BODY$;
 
 ALTER PROCEDURE public.merge_stop(text, text) OWNER TO dennis;
-
-CALL public.merge_stop('2470857', 'OpenOV')

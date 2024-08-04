@@ -1,12 +1,14 @@
 -- FUNCTION: public.search_stop(text)
-DROP FUNCTION IF EXISTS public.search_stop(text);
-CREATE OR REPLACE FUNCTION public.search_stop(target text)
+DROP FUNCTION IF EXISTS public.nearby_stops(double precision, double precision);
+
+CREATE OR REPLACE FUNCTION public.nearby_stops(x double precision, y double precision)
     RETURNS TABLE(
         name text,
         stop_type int,
         id text,
         longitude double precision,
-        latitude double precision)
+        latitude double precision,
+		distance_in_meters int)
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
@@ -17,29 +19,25 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
         public.related_stops
         INNER JOIN stops ON related_stops.related_stop = stops.internal_id
     WHERE
-        SIMILARITY(stops.name, LOWER(target)) >= 0.3
+        ST_DWithin(stops.geo_location, ST_MakePoint(x, y), 3000, FALSE)
 	GROUP BY primary_stop, stop_type)
     select         
             stops.name,
             stops.stop_type,
             primary_stop as id,
             longitude,
-            latitude 
+            latitude,
+			(SELECT ST_DistanceSphere(stops.geo_location, ST_MakePoint(x, y, 3857)) as distance_meters)
 	from stops
     INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
     where related_stops.primary_stop in (select primary_stop from found_primaries)
-    ORDER BY SIMILARITY(stops.name, LOWER(target)) DESC
+    ORDER BY (SELECT ST_DistanceSphere(stops.geo_location, ST_MakePoint(x, y))) ASC
     LIMIT 100;
 $BODY$;
 
-ALTER FUNCTION public.search_stop(text) OWNER TO dennis;
+ALTER FUNCTION public.nearby_stops(double precision, double precision) OWNER TO dennis;
 
 SELECT
     *
 FROM
-    public.search_stop('Dordrecht')
-
-
--- select * from stops stops
---     INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
--- where primary_stop = 'afbb0f2a-0f49-43c3-bc1f-73ce2f9731df'
+    public.nearby_stops(51.794179, 4.653556)
