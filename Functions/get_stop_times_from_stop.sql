@@ -25,8 +25,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_s
     AS $BODY$
 SELECT
         trips.internal_id,
-        (calendar_dates.date + stop_times.arrival_time)  AT time zone agencies.timezone as arrival_time,
-        (calendar_dates.date + stop_times.departure_time)  AT time zone agencies.timezone as departure_time,
+        (calendar_dates.date + stop_times.arrival_time) AT time zone 'UTC'  as arrival_time,
+        (calendar_dates.date + stop_times.departure_time) AT time zone 'UTC' as departure_time,
         stop_times.stop_headsign,
         stop_times.data_origin,
         trips.headsign,
@@ -52,7 +52,7 @@ SELECT
 	INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
 	INNER JOIN agencies ON routes.agency_id = agencies.id
 		AND routes.data_origin = agencies.data_origin
-	INNER JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
+	INNER JOIN calendar_dates ON trips.service_id = calendar_dates.service_id AND calendar_dates.data_origin = trips.data_origin 
     WHERE
         -- parent_station / station filter
 (primary_stop = target)
@@ -60,7 +60,7 @@ SELECT
 
             -- Date filter
                     
-            AND((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) AT time zone agencies.timezone  >= from_time AT time zone agencies.timezone)
+            AND((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) >= from_time)
 
             --Prevent showing the trip if the current stop is the last stop
             AND EXISTS(
@@ -82,4 +82,4 @@ $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(uuid, int, timestamp with time zone ) OWNER TO dennis;
 
-SELECT * FROM get_stop_times_from_stop('193a3ce3-b584-4bf6-92cc-ba08b23638ea'::uuid, 1, '2024-08-01 22:21+02');
+SELECT * FROM get_stop_times_from_stop('af1ceb29-ebaa-4024-baa1-bd9364b199ba'::uuid, 2, '2024-08-13 18:21Z');
