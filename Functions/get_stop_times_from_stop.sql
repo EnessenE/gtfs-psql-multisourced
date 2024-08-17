@@ -25,8 +25,9 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_s
     AS $BODY$
 SELECT
         trips.internal_id,
-        (calendar_dates.date + stop_times.arrival_time) AT time zone 'UTC'  as arrival_time,
-        (calendar_dates.date + stop_times.departure_time) AT time zone 'UTC' as departure_time,
+		 -- TO FIX FOR PICKUP/DROPOFF WINDOWS AND CALENDERS
+        (coalesce(calendar_dates.date, (SELECT CURRENT_DATE)) + stop_times.arrival_time) AT time zone 'UTC'  as arrival_time,
+        (coalesce(calendar_dates.date, (SELECT CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' as departure_time,
         stop_times.stop_headsign,
         stop_times.data_origin,
         trips.headsign,
@@ -50,19 +51,18 @@ SELECT
 		AND stop_times.data_origin = trips.data_origin
 	INNER JOIN stops ON stop_times.stop_id = stops.id AND stop_times.data_origin = stops.data_origin 
 	INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
-	INNER JOIN agencies ON routes.agency_id = agencies.id
-		AND routes.data_origin = agencies.data_origin
-	INNER JOIN calendar_dates ON trips.service_id = calendar_dates.service_id AND calendar_dates.data_origin = trips.data_origin 
-    WHERE
-        -- parent_station / station filter
-(primary_stop = target)
-	AND stop_type = target_stop_type
-
-            -- Date filter
+	INNER JOIN agencies ON routes.agency_id = agencies.id AND routes.data_origin = agencies.data_origin
+	LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id AND calendar_dates.data_origin = trips.data_origin 
+	LEFT JOIN calenders ON trips.service_id = calenders.service_id AND calenders.data_origin = trips.data_origin 
+   WHERE
+        --parent_station / station filter
+		(primary_stop = target)
+			AND stop_type = target_stop_type
+            --Date filter
                     
-            AND((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) >= from_time)
+            AND(    ((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) >= from_time) OR calenders.start_date IS NOT NULL)
 
-            --Prevent showing the trip if the current stop is the last stop
+            -- Prevent showing the trip if the current stop is the last stop
             AND EXISTS(
                 SELECT
                     1
@@ -82,4 +82,4 @@ $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(uuid, int, timestamp with time zone ) OWNER TO dennis;
 
-SELECT * FROM get_stop_times_from_stop('af1ceb29-ebaa-4024-baa1-bd9364b199ba'::uuid, 2, '2024-08-13 18:21Z');
+SELECT * FROM get_stop_times_from_stop('7f6c60b8-b6fd-45b1-8cb8-99b13addc12a'::uuid, 1, '2024-08-17 10:27Z');
