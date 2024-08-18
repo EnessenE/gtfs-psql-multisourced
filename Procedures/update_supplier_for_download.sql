@@ -15,16 +15,16 @@ BEGIN
     if pending = true then
         UPDATE supplier_configurations
         SET 
-            last_updated = last_update,
-            download_pending = false,
-            latest_succesfull_import_id = supplier_configurations.import_id
+            last_attempt = last_update,
+            download_pending = false
         WHERE 
             lower(name) = lower(target);
     elsif pending = false then
         UPDATE supplier_configurations
         SET 
-            last_attempt = last_update,
-            download_pending = false
+            last_updated = last_update,
+            download_pending = false,
+            latest_succesfull_import_id = supplier_configurations.import_id
         WHERE 
             lower(name) = lower(target);
     end if;

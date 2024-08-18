@@ -60,7 +60,14 @@ SELECT
 			AND stop_type = target_stop_type
             --Date filter
                     
-            AND(    ((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) >= from_time) OR calenders.start_date IS NOT NULL)
+            AND(    ((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) >= from_time) OR ( calenders.start_date >= from_time AND (
+                (EXTRACT(DOW FROM from_time) = 0 AND sunday = true) OR
+                (EXTRACT(DOW FROM from_time) = 1 AND monday = true) OR
+                (EXTRACT(DOW FROM from_time) = 2 AND tuesday = true) OR
+                (EXTRACT(DOW FROM from_time) = 3 AND wednesday = true) OR
+                (EXTRACT(DOW FROM from_time) = 4 AND thursday = true) OR
+                (EXTRACT(DOW FROM from_time) = 5 AND friday = true) OR
+                (EXTRACT(DOW FROM from_time) = 6 AND saturday = true))))
 
             -- Prevent showing the trip if the current stop is the last stop
             AND EXISTS(
@@ -74,7 +81,7 @@ SELECT
                     AND st2.stop_sequence > stop_times.stop_sequence
 	LIMIT 1)
         ORDER BY
-            calendar_dates.date::date,
+            coalesce(calendar_dates.date, (SELECT CURRENT_DATE)) + stop_times.arrival_time ASC,
             arrival_time ASC
         LIMIT 100;
 
@@ -82,4 +89,4 @@ $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(uuid, int, timestamp with time zone ) OWNER TO dennis;
 
-SELECT * FROM get_stop_times_from_stop('7f6c60b8-b6fd-45b1-8cb8-99b13addc12a'::uuid, 1, '2024-08-17 10:27Z');
+SELECT * FROM get_stop_times_from_stop('3c849953-509b-4d2a-b9b4-f3ec1975eb57'::uuid, 100, '2024-08-18 14:27Z');
