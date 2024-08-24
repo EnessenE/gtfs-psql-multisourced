@@ -6,7 +6,6 @@ AS $BODY$
 BEGIN
     UPDATE supplier_configurations
     SET 
-        last_updated = last_update,
         download_pending = pending
     WHERE 
         lower(name) = lower(target);

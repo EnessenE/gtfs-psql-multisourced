@@ -36,7 +36,7 @@ SELECT
         trips.service_id,
         routes.short_name,
         routes.long_name,
-        agencies.name,
+        coalesce(agencies.name, 'Unknown agency'),
         routes.url,
         routes.type,
         routes.description,
@@ -51,14 +51,14 @@ SELECT
 		AND stop_times.data_origin = trips.data_origin
 	INNER JOIN stops ON stop_times.stop_id = stops.id AND stop_times.data_origin = stops.data_origin 
 	INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
-	INNER JOIN agencies ON routes.agency_id = agencies.id AND routes.data_origin = agencies.data_origin
+	LEFT JOIN agencies ON routes.agency_id = agencies.id AND routes.data_origin = agencies.data_origin
 	LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id AND calendar_dates.data_origin = trips.data_origin 
 	LEFT JOIN calenders ON trips.service_id = calenders.service_id AND calenders.data_origin = trips.data_origin 
    WHERE
         --parent_station / station filter
 		(primary_stop = target)
-			AND stop_type = target_stop_type
-            --Date filter
+			 AND stop_type = target_stop_type
+   --          --Date filter
                     
             AND(    ((calendar_dates.date:: date + stop_times.arrival_time::time without time zone) >= from_time) OR ( calenders.start_date >= from_time AND (
                 (EXTRACT(DOW FROM from_time) = 0 AND sunday = true) OR
@@ -69,7 +69,7 @@ SELECT
                 (EXTRACT(DOW FROM from_time) = 5 AND friday = true) OR
                 (EXTRACT(DOW FROM from_time) = 6 AND saturday = true))))
 
-            -- Prevent showing the trip if the current stop is the last stop
+   --          -- Prevent showing the trip if the current stop is the last stop
             AND EXISTS(
                 SELECT
                     1
@@ -89,4 +89,4 @@ $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(uuid, int, timestamp with time zone ) OWNER TO dennis;
 
-SELECT * FROM get_stop_times_from_stop('3c849953-509b-4d2a-b9b4-f3ec1975eb57'::uuid, 100, '2024-08-18 14:27Z');
+SELECT * FROM get_stop_times_from_stop('5d8eac1a-a5b4-4f2a-b109-190c79b5692a'::uuid, 1, '2024-08-24 08:27Z');

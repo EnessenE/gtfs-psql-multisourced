@@ -56,7 +56,7 @@ trip_data AS(
 SELECT
     routes.data_origin,
     routes.id,
-    agencies.name,
+    COALESCE(agencies.name, 'Unknown agency'),
     short_name,
     long_name,
     description,
@@ -69,7 +69,7 @@ SELECT
     routes.import_id
 FROM
     routes
-JOIN agencies ON agencies.id = routes.agency_id
+LEFT JOIN agencies ON agencies.id = routes.agency_id and agencies.data_origin = routes.data_origin
 WHERE(routes.id,
     routes.data_origin) IN(
         SELECT
@@ -82,3 +82,4 @@ $BODY$;
 
 ALTER FUNCTION public.get_routes_from_stop(uuid, int) OWNER TO dennis;
 
+select * from get_routes_from_stop('75cbbb0d-7082-4395-a466-fedb4f04ba01', 1)
