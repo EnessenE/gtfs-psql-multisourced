@@ -28,8 +28,8 @@ CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target uuid, target_stop_
             AND stop_type = target_stop_type
 ),
 stop_data AS(
-    SELECT distinct
-         trip_id,
+    SELECT DISTINCT
+        trip_id,
         data_origin
     FROM
         stop_times
@@ -43,7 +43,8 @@ stop_data AS(
 ),
 trip_data AS(
     SELECT DISTINCT
-        route_id, data_origin
+        route_id,
+        data_origin
     FROM
         trips
     WHERE(id,
@@ -69,7 +70,8 @@ SELECT
     routes.import_id
 FROM
     routes
-LEFT JOIN agencies ON agencies.id = routes.agency_id and agencies.data_origin = routes.data_origin
+    LEFT JOIN agencies ON agencies.id = routes.agency_id
+        AND agencies.data_origin = routes.data_origin
 WHERE(routes.id,
     routes.data_origin) IN(
         SELECT
@@ -77,9 +79,26 @@ WHERE(routes.id,
             data_origin
         FROM
             trip_data)
-			ORDER BY id, short_name asc
+ORDER BY
+    id,
+    short_name ASC
+GROUP BY
+    routes.data_origin,
+    COALESCE(agencies.name, 'Unknown agency'),
+    short_name,
+    long_name,
+    description,
+    type,
+    routes.url,
+    color,
+    text_color,
+    routes.last_updated,
+    routes.import_id
 $BODY$;
 
 ALTER FUNCTION public.get_routes_from_stop(uuid, int) OWNER TO dennis;
 
-select * from get_routes_from_stop('75cbbb0d-7082-4395-a466-fedb4f04ba01', 1)
+SELECT
+    *
+FROM
+    get_routes_from_stop('75cbbb0d-7082-4395-a466-fedb4f04ba01', 1)

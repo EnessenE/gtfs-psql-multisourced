@@ -24,9 +24,9 @@ CREATE OR REPLACE FUNCTION public.get_shapes_from_trip(target uuid)
     FROM
         shapes
     WHERE
-        shapes.id = (select shape_id from trip_data limit 1)
+        shapes.id = (select shape_id from trip_data limit 1) and shapes.data_origin = (select data_origin from trip_data limit 1)
     ORDER BY
-        "sequence" DESC
+        "sequence" ASC
 $BODY$;
 
-select * from get_shapes_from_trip('be98ccb6-12c0-46a8-995c-4642d4069968')
+select * from get_shapes_from_trip('da6e6931-9eb2-417c-9061-05923726bb91')
