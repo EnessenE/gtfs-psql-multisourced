@@ -12,7 +12,7 @@ CREATE OR REPLACE FUNCTION public.get_mappings_from_supplier(target text)
         new_type,
         supplier_configuration_name
     FROM
-        public.supplier_type_mapping
+        public.supplier_type_mappings
     WHERE
         supplier_configuration_name = target;
 $BODY$;

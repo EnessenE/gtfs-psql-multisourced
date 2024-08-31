@@ -1,7 +1,6 @@
--- FUNCTION: public.search_stop(text)
-DROP FUNCTION IF EXISTS public.search_stop(text);
+DROP FUNCTION get_stops_from_data_origin(text);
 
-CREATE OR REPLACE FUNCTION public.search_stop(target text)
+CREATE OR REPLACE FUNCTION public.get_stops_from_data_origin(target_data_origin text)
     RETURNS TABLE(
         name text,
         stop_type int,
@@ -18,8 +17,7 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
             public.related_stops
             INNER JOIN stops ON related_stops.related_stop = stops.internal_id
         WHERE
-            stop_type != 1000
-            AND SIMILARITY(stops.name, LOWER(target)) >= 0.4
+            stops.data_origin = target_data_origin
         GROUP BY
             primary_stop,
             stop_type
@@ -44,16 +42,13 @@ CREATE OR REPLACE FUNCTION public.search_stop(target text)
         stops.stop_type,
         primary_stop
     ORDER BY
-        SIMILARITY(stops.name, LOWER(target)) DESC
-LIMIT 100;
+        stops.name DESC
 $BODY$;
 
-ALTER FUNCTION public.search_stop(text) OWNER TO dennis;
+ALTER FUNCTION public.get_stops_from_data_origin(text) OWNER TO dennis;
 
 SELECT
     *
 FROM
-    public.search_stop('Dordrecht')
-    -- select * from stops stops
-    --     INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
-    -- where primary_stop = 'afbb0f2a-0f49-43c3-bc1f-73ce2f9731df'
+    get_stops_from_data_origin('OpenOV');
+

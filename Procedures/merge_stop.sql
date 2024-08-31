@@ -37,7 +37,7 @@ BEGIN
     FROM
         stops
     WHERE ((stops.parent_station = stopdata.id
-            OR stops.id = stopdata.parent_station)
+            OR (stops.id = stopdata.parent_station AND stopdata.data_origin = stops.data_origin)) 
         OR ((ST_DWithin(stops.geo_location, stopdata.geo_location, 75, FALSE))
             OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE)
                 AND SIMILARITY(stopdata.name, stops.name) >= 0.2)

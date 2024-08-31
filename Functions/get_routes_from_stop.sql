@@ -1,7 +1,8 @@
-CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target uuid, target_stop_type int)
+-- FUNCTION: public.get_routes_from_stop(uuid, integer)
+-- DROP FUNCTION IF EXISTS public.get_routes_from_stop(uuid, integer);
+CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target uuid, target_stop_type integer)
     RETURNS TABLE(
         data_origin text,
-        id text,
         agency text,
         short_name text,
         long_name text,
@@ -10,8 +11,6 @@ CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target uuid, target_stop_
         url text,
         color text,
         text_color text,
-        internal_id uuid,
-        last_updated timestamp with time zone,
         import_id uuid)
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
@@ -56,7 +55,6 @@ trip_data AS(
             stop_data))
 SELECT
     routes.data_origin,
-    routes.id,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
     long_name,
@@ -65,8 +63,6 @@ SELECT
     routes.url,
     color,
     text_color,
-    routes.internal_id,
-    routes.last_updated,
     routes.import_id
 FROM
     routes
@@ -79,9 +75,6 @@ WHERE(routes.id,
             data_origin
         FROM
             trip_data)
-ORDER BY
-    id,
-    short_name ASC
 GROUP BY
     routes.data_origin,
     COALESCE(agencies.name, 'Unknown agency'),
@@ -92,13 +85,10 @@ GROUP BY
     routes.url,
     color,
     text_color,
-    routes.last_updated,
     routes.import_id
+ORDER BY
+    short_name ASC
 $BODY$;
 
-ALTER FUNCTION public.get_routes_from_stop(uuid, int) OWNER TO dennis;
+ALTER FUNCTION public.get_routes_from_stop(uuid, integer) OWNER TO dennis;
 
-SELECT
-    *
-FROM
-    get_routes_from_stop('75cbbb0d-7082-4395-a466-fedb4f04ba01', 1)
