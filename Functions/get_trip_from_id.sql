@@ -1,4 +1,5 @@
-DROP FUNCTION IF EXISTS public.get_trip_from_id(target text);
+
+DROP FUNCTION IF EXISTS public.get_trip_from_id(target uuid);
 
 CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
     RETURNS TABLE(
@@ -9,22 +10,49 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
         short_name text,
         direction int,
         block_id text,
-        data_origin text)
+        data_origin text,
+        latitude double precision,
+        longitude double precision,
+        current_status text,
+        congestion_level text,
+        occupancy_status text,
+        occupancy_percentage integer,
+        measurement_time timestamp with time zone,
+		target_stop_id uuid,
+		target_stop text,
+		route_short_name text,
+		route_long_name text
+		)
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
     SELECT
-        id,
+        trips.id,
         route_id,
         service_id,
         headsign,
-        short_name,
+        trips.short_name,
         direction,
         block_id,
-        data_origin
+        trips.data_origin,
+		position_entities.latitude,
+		position_entities.longitude,
+		position_entities.current_status,
+		position_entities.congestion_level,
+		position_entities.occupancy_status,
+		position_entities.occupancy_percentage,
+		position_entities.measurement_time,
+		stops.internal_id,
+		stops.name,
+		routes.short_name,
+		routes.long_name
     FROM
         trips
+	LEFT JOIN routes on routes.data_origin = trips.data_origin and routes.id = trips.route_id
+	LEFT JOIN position_entities on position_entities.data_origin = trips.data_origin and position_entities.trip_id = trips.id
+	LEFT JOIN stops on stops.data_origin = trips.data_origin and position_entities.stop_id = stops.id
     WHERE
-        internal_id = target
+        trips.internal_id = target
 $BODY$;
 
+select * from get_trip_from_id('8cdf5f9f-4a01-4832-acbf-420185066816')
