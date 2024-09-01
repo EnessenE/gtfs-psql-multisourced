@@ -1,5 +1,5 @@
 -- FUNCTION: public.get_stop_times_from_stop(uuid, integer, timestamp with time zone)
-DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(uuid,integer,timestamp with time zone);
+DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(uuid, integer, timestamp with time zone);
 
 CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_stop_type integer, from_time timestamp with time zone)
     RETURNS TABLE(
