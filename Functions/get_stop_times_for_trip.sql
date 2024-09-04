@@ -8,6 +8,11 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
         name text,
         arrival time with time zone,
         departure time with time zone,
+        planned_arrival_time time with time zone,
+        planned_departure_time time with time zone,
+        actual_arrival_time time with time zone,
+        actual_departure_time time with time zone,
+		schedule_relationship text,
         platform_code text,
         stop_headsign text,
         latitude double precision,
@@ -30,6 +35,11 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
     stops.name,
 (stop_times.arrival_time) AS arrival_time,
 (stop_times.departure_time) AS departure_time,
+(stop_times.arrival_time) AS planned_arrival_time,
+(stop_times.departure_time) AS planned_departure_time,
+(trip_updates_stop_times.arrival_time) AS actual_arrival_time,
+(trip_updates_stop_times.departure_time) AS actual_departure_time,
+trip_updates_stop_times.schedule_relationship,
     stops.platform_code,
     stop_times.stop_headsign,
     stops.latitude,
@@ -41,6 +51,8 @@ FROM
     stop_times
     JOIN stops ON stop_times.stop_id = stops.id and stop_times.data_origin = stops.data_origin
     JOIN trips ON trips.id = stop_times.trip_id and trips.data_origin = stop_times.data_origin
+    LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
+        AND trip_updates_stop_times.data_origin = trips.data_origin AND trip_updates_stop_times.stop_sequence = stop_times.stop_sequence
 WHERE
     trips.internal_id = target
 ORDER BY
@@ -52,4 +64,4 @@ ALTER FUNCTION public.get_stop_times_for_trip(uuid) OWNER TO dennis;
 SELECT
     *
 FROM
-    public.get_stop_times_for_trip('79b7c1ca-17cf-434e-8785-e32d04160f24')
+    public.get_stop_times_for_trip('fe55cc8b-7b3e-4da8-b181-d35014bc9f7c')
