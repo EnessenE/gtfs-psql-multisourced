@@ -41,35 +41,35 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_s
                     SELECT
                         CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' AS departure_time,
 (coalesce(calendar_dates.date,(
-                    SELECT
-                        CURRENT_DATE)) + stop_times.arrival_time) AT time zone 'UTC' AS arrival_time,
+                SELECT
+                    CURRENT_DATE)) + stop_times.arrival_time) AT time zone 'UTC' AS planned_arrival_time,
 (coalesce(calendar_dates.date,(
-                    SELECT
-                        CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' AS departure_time,
+            SELECT
+                CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' AS planned_departure_time,
 (coalesce(calendar_dates.date,(
-                    SELECT
-                        CURRENT_DATE)) + trip_updates_stop_times.arrival_time) AT time zone 'UTC' AS arrival_time,
+            SELECT
+                CURRENT_DATE)) + trip_updates_stop_times.arrival_time) AS actual_arrival_time,
 (coalesce(calendar_dates.date,(
-                    SELECT
-                        CURRENT_DATE)) + trip_updates_stop_times.departure_time) AT time zone 'UTC' AS departure_time,
-						trip_updates_stop_times.schedule_relationship,
-    stop_times.stop_headsign,
-    stop_times.data_origin,
-    trips.headsign,
-    trips.short_name,
-    stops.platform_code,
-    stops.platform_code,
-    trips.service_id,
-    routes.short_name,
-    routes.long_name,
-    coalesce(agencies.name, 'Unknown agency'),
-    routes.url,
-    routes.type,
-    routes.description,
-    routes.color,
-    routes.text_color,
-    stops.stop_type,
-(position_entities.id IS NOT NULL)
+            SELECT
+                CURRENT_DATE)) + trip_updates_stop_times.departure_time) AS actual_departure_time,
+trip_updates_stop_times.schedule_relationship,
+stop_times.stop_headsign,
+stop_times.data_origin,
+trips.headsign,
+trips.short_name,
+stops.platform_code,
+stops.platform_code,
+trips.service_id,
+routes.short_name,
+routes.long_name,
+coalesce(agencies.name, 'Unknown agency'),
+routes.url,
+routes.type,
+routes.description,
+routes.color,
+routes.text_color,
+stops.stop_type,
+(trip_updates_stop_times.trip_id IS NOT NULL)
 FROM
     trips
     INNER JOIN routes ON trips.route_id = routes.id
@@ -85,17 +85,17 @@ FROM
         AND calendar_dates.data_origin = trips.data_origin
     LEFT JOIN calenders ON trips.service_id = calenders.service_id
         AND calenders.data_origin = trips.data_origin
-    LEFT JOIN position_entities ON trips.id = position_entities.trip_id
-        AND position_entities.data_origin = trips.data_origin
     LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
         AND trip_updates_stop_times.data_origin = trips.data_origin
+        AND trip_updates_stop_times.stop_id = stops.id
 WHERE
     --parent_station / station filter
 (primary_stop = target)
     AND stop_type = target_stop_type
     --          --Date filter
     AND(((calendar_dates.date::date + stop_times.arrival_time::time WITHOUT time zone) >= from_time)
-        OR(calenders.start_date >= from_time
+        --18 <= 10
+        OR(calenders.start_date <= from_time
             AND((EXTRACT(DOW FROM from_time) = 0
                     AND sunday = TRUE)
                 OR(EXTRACT(DOW FROM from_time) = 1
@@ -134,5 +134,5 @@ ALTER FUNCTION public.get_stop_times_from_stop(uuid, integer, timestamp with tim
 SELECT
     *
 FROM
-    get_stop_times_from_stop('ad414fe1-d629-468a-bc81-8516c04c4a13'::uuid, 1, '2024-09-04 19:00Z');
+    get_stop_times_from_stop('0c94a1e8-0a61-4bea-a36d-9814aa0f1f1e'::uuid, 2, '2024-09-28 18:00Z');
 

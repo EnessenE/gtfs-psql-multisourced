@@ -55,4 +55,11 @@ CREATE INDEX IF NOT EXISTS ix_position_entities_id_data_origin
     ON public.position_entities USING btree
     (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS ix_position_entities_trip_id_data_origin
+
+-- Index: ix_position_entities_id_data_origin_stop_typeCREATE INDEX IF NOT EXISTS ix_position_entities_id_data_origin
+    ON public.position_entities USING btree
+    (trip_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
 -- Index: ix_position_entities_id_data_origin_stop_type

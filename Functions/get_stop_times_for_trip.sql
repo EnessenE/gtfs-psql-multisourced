@@ -6,8 +6,6 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
 ,
         id text,
         name text,
-        arrival time with time zone,
-        departure time with time zone,
         planned_arrival_time time with time zone,
         planned_departure_time time with time zone,
         actual_arrival_time time with time zone,
@@ -33,12 +31,10 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
             WHERE(stops.internal_id = related_stops.related_stop)
         LIMIT 1) AS id,
     stops.name,
-(stop_times.arrival_time) AS arrival_time,
-(stop_times.departure_time) AS departure_time,
-(stop_times.arrival_time) AS planned_arrival_time,
-(stop_times.departure_time) AS planned_departure_time,
-(trip_updates_stop_times.arrival_time) AS actual_arrival_time,
-(trip_updates_stop_times.departure_time) AS actual_departure_time,
+(stop_times.arrival_time) AT time zone coalesce(stops.timezone, 'UTC')  AS planned_arrival_time,
+(stop_times.departure_time) AT time zone coalesce(stops.timezone, 'UTC')  AS planned_departure_time,
+(trip_updates_stop_times.arrival_time) A AS actual_arrival_time,
+(trip_updates_stop_times.departure_time)  AS actual_departure_time,
 trip_updates_stop_times.schedule_relationship,
     stops.platform_code,
     stop_times.stop_headsign,
@@ -52,7 +48,7 @@ FROM
     JOIN stops ON stop_times.stop_id = stops.id and stop_times.data_origin = stops.data_origin
     JOIN trips ON trips.id = stop_times.trip_id and trips.data_origin = stop_times.data_origin
     LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
-        AND trip_updates_stop_times.data_origin = trips.data_origin AND trip_updates_stop_times.stop_sequence = stop_times.stop_sequence
+        AND trip_updates_stop_times.data_origin = trips.data_origin AND trip_updates_stop_times.stop_id = stops.id
 WHERE
     trips.internal_id = target
 ORDER BY
@@ -64,4 +60,4 @@ ALTER FUNCTION public.get_stop_times_for_trip(uuid) OWNER TO dennis;
 SELECT
     *
 FROM
-    public.get_stop_times_for_trip('fe55cc8b-7b3e-4da8-b181-d35014bc9f7c')
+    public.get_stop_times_for_trip('13d5f8e3-1c17-408a-9a07-850720baaf7d')

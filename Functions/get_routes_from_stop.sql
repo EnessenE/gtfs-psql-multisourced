@@ -92,3 +92,5 @@ $BODY$;
 
 ALTER FUNCTION public.get_routes_from_stop(uuid, integer) OWNER TO dennis;
 
+
+selecT * from get_routes_from_stop('0c94a1e8-0a61-4bea-a36d-9814aa0f1f1e'::uuid, 2)
