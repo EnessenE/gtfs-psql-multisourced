@@ -8,8 +8,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
         name text,
         planned_arrival_time time with time zone,
         planned_departure_time time with time zone,
-        actual_arrival_time time with time zone,
-        actual_departure_time time with time zone,
+        actual_arrival_time timestamp with time zone,
+        actual_departure_time timestamp with time zone,
 		schedule_relationship text,
         platform_code text,
         stop_headsign text,
@@ -33,8 +33,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
     stops.name,
 (stop_times.arrival_time) AT time zone coalesce(stops.timezone, 'UTC')  AS planned_arrival_time,
 (stop_times.departure_time) AT time zone coalesce(stops.timezone, 'UTC')  AS planned_departure_time,
-(trip_updates_stop_times.arrival_time) A AS actual_arrival_time,
-(trip_updates_stop_times.departure_time)  AS actual_departure_time,
+(trip_updates_stop_times.arrival_time)   AS actual_arrival_time,
+(trip_updates_stop_times.departure_time)   AS actual_departure_time,
 trip_updates_stop_times.schedule_relationship,
     stops.platform_code,
     stop_times.stop_headsign,
@@ -60,4 +60,4 @@ ALTER FUNCTION public.get_stop_times_for_trip(uuid) OWNER TO dennis;
 SELECT
     *
 FROM
-    public.get_stop_times_for_trip('13d5f8e3-1c17-408a-9a07-850720baaf7d')
+    public.get_stop_times_for_trip('41e1b64f-1f59-477d-9346-63049f939d65')

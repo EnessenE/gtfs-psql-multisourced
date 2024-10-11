@@ -46,12 +46,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_s
 (coalesce(calendar_dates.date,(
             SELECT
                 CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' AS planned_departure_time,
-(coalesce(calendar_dates.date,(
-            SELECT
-                CURRENT_DATE)) + trip_updates_stop_times.arrival_time) AS actual_arrival_time,
-(coalesce(calendar_dates.date,(
-            SELECT
-                CURRENT_DATE)) + trip_updates_stop_times.departure_time) AS actual_departure_time,
+				trip_updates_stop_times.arrival_time AS actual_arrival_time,
+				trip_updates_stop_times.departure_time AS actual_departure_time,
 trip_updates_stop_times.schedule_relationship,
 stop_times.stop_headsign,
 stop_times.data_origin,
@@ -134,5 +130,5 @@ ALTER FUNCTION public.get_stop_times_from_stop(uuid, integer, timestamp with tim
 SELECT
     *
 FROM
-    get_stop_times_from_stop('0c94a1e8-0a61-4bea-a36d-9814aa0f1f1e'::uuid, 2, '2024-09-28 18:00Z');
+    get_stop_times_from_stop('0c1a5d15-f246-4648-b61e-0308c8460adc'::uuid, 1, '2024-10-11 20:40Z');
 

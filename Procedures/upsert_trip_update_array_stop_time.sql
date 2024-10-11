@@ -9,10 +9,10 @@ CREATE TYPE trip_update_stop_time_type AS (
     stop_id text,
     trip_id text,
     arrival_delay int,
-    arrival_time time WITHOUT time zone,
+    arrival_time timestamp with time zone,
     arrival_uncertainty int,
     departure_delay int,
-    departure_time time WITHOUT time zone,
+    departure_time timestamp with time zone,
     departure_uncertainty int,
     schedule_relationship text
 );
