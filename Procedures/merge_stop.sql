@@ -44,7 +44,7 @@ BEGIN
                     AND SIMILARITY(stopdata.name, stops.name) >= 0.6)
                 OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE) 
                     AND SIMILARITY(stopdata.name, stops.name) >= 0.9)
-            ) AND (stopdata.parent_station IS NULL ) )
+            ) AND (stopdata.parent_station IS NULL or stopdata.parent_station = '' ) )
         )
     LOOP
         -- Check if temprow is already a related_stop in the related_stops table
