@@ -6,8 +6,8 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
 ,
         id text,
         name text,
-        planned_arrival_time time with time zone,
-        planned_departure_time time with time zone,
+        planned_arrival_time timestamp with time zone,
+        planned_departure_time timestamp with time zone,
         actual_arrival_time timestamp with time zone,
         actual_departure_time timestamp with time zone,
 		schedule_relationship text,
@@ -31,8 +31,10 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_for_trip(target uuid)
             WHERE(stops.internal_id = related_stops.related_stop)
         LIMIT 1) AS id,
     stops.name,
-(stop_times.arrival_time) AT time zone coalesce(stops.timezone, 'UTC')  AS planned_arrival_time,
-(stop_times.departure_time) AT time zone coalesce(stops.timezone, 'UTC')  AS planned_departure_time,
+(coalesce(calendar_dates.date,(SELECT CURRENT_DATE)) + stop_times.arrival_time) AS planned_arrival_time,
+
+						
+(coalesce(calendar_dates.date,(SELECT CURRENT_DATE)) + stop_times.departure_time) AS planned_departure_time,
 (trip_updates_stop_times.arrival_time)   AS actual_arrival_time,
 (trip_updates_stop_times.departure_time)   AS actual_departure_time,
 trip_updates_stop_times.schedule_relationship,
@@ -47,6 +49,10 @@ FROM
     stop_times
     JOIN stops ON stop_times.stop_id = stops.id and stop_times.data_origin = stops.data_origin
     JOIN trips ON trips.id = stop_times.trip_id and trips.data_origin = stop_times.data_origin
+    LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
+        AND calendar_dates.data_origin = trips.data_origin and calendar_dates.service_id = trips.service_id and date = (SELECT CURRENT_DATE)
+    LEFT JOIN calenders ON trips.service_id = calenders.service_id
+        AND calenders.data_origin = trips.data_origin and calenders.service_id = trips.service_id
     LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
         AND trip_updates_stop_times.data_origin = trips.data_origin AND trip_updates_stop_times.stop_id = stops.id
 WHERE
@@ -60,4 +66,4 @@ ALTER FUNCTION public.get_stop_times_for_trip(uuid) OWNER TO dennis;
 SELECT
     *
 FROM
-    public.get_stop_times_for_trip('41e1b64f-1f59-477d-9346-63049f939d65')
+    public.get_stop_times_for_trip('e8bd1d7f-f490-4a86-8771-b35061c36956')
