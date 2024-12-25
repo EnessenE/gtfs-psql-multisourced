@@ -18,6 +18,9 @@ BEGIN
 
     DELETE FROM trip_updates_stop_times
     WHERE last_updated < now () - INTERVAL '1 hour';
+
+    DELETE FROM alerts
+    WHERE last_updated < now () - INTERVAL '1 hour';
 END;
 $BODY$;
 

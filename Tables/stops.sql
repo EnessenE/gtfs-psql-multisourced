@@ -111,13 +111,6 @@ CREATE INDEX IF NOT EXISTS ix_stops_internal_id_stop_type
     ON public.stops USING btree
     (internal_id ASC NULLS LAST, stop_type ASC NULLS LAST)
     TABLESPACE pg_default;
-
--- DROP INDEX IF EXISTS public.ix_stops_internal_id_stop_type;
-
-CREATE INDEX IF NOT EXISTS ix_stops_name_stop_type
-    ON public.stops USING btree
-    (name ASC NULLS LAST, stop_type ASC NULLS LAST)
-    TABLESPACE pg_default;
 -- Index: ix_stops_name
 
 -- DROP INDEX IF EXISTS public.ix_stops_name;
@@ -133,6 +126,14 @@ CREATE INDEX IF NOT EXISTS ix_stops_name
 CREATE INDEX IF NOT EXISTS ix_stops_name_parent_station
     ON public.stops USING btree
     (name COLLATE pg_catalog."default" ASC NULLS LAST, parent_station COLLATE pg_catalog."default" ASC NULLS LAST)
+    TABLESPACE pg_default;
+-- Index: ix_stops_name_stop_type
+
+-- DROP INDEX IF EXISTS public.ix_stops_name_stop_type;
+
+CREATE INDEX IF NOT EXISTS ix_stops_name_stop_type
+    ON public.stops USING btree
+    (name COLLATE pg_catalog."default" ASC NULLS LAST, stop_type ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_stops_parent_station
 

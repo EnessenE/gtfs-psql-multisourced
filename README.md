@@ -1,4 +1,5 @@
 A PostgresQL GTFS database that support GTFS data from multiple external sources.<br>
+Originally made with EF-Core so you may see some oddities still remain. It is, and stays a hobby-project.
 <br>
 For example:
 - Data is imported from data supplier 1 for country 1
