@@ -31,8 +31,9 @@ CREATE OR REPLACE FUNCTION public.get_stops_from_data_origin(target_data_origin 
         stops
         INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
     WHERE
-        stop_type != 1000
-        AND related_stops.primary_stop IN(
+		stops.data_origin = target_data_origin
+		AND
+        related_stops.primary_stop IN(
             SELECT
                 primary_stop
             FROM
@@ -50,5 +51,5 @@ ALTER FUNCTION public.get_stops_from_data_origin(text) OWNER TO dennis;
 SELECT
     *
 FROM
-    get_stops_from_data_origin('OpenOV');
+    get_stops_from_data_origin('sncf-tgv');
 
