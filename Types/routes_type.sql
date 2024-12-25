@@ -1,4 +1,4 @@
-CREATE TYPE public.routes_type AS TABLE (
+CREATE TYPE public.routes_type AS (
     data_origin TEXT,
     id TEXT,
     agency_id TEXT,
@@ -10,6 +10,6 @@ CREATE TYPE public.routes_type AS TABLE (
     color TEXT,
     text_color TEXT,
     internal_id TEXT,
-    last_updated TIMESTAMPTZ,
+    last_updated timestamp with time zone,
     import_id TEXT
 );

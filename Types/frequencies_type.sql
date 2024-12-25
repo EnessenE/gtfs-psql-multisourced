@@ -1,4 +1,4 @@
-CREATE TYPE public.frequencies_type AS TABLE (
+CREATE TYPE public.frequencies_type AS (
     data_origin TEXT,
     trip_id TEXT,
     start_time TIME,
@@ -6,6 +6,6 @@ CREATE TYPE public.frequencies_type AS TABLE (
     headway_secs INT,
     exact_times INT,
     internal_id TEXT,
-    last_updated TIMESTAMPTZ,
+    last_updated timestamp with time zone,
     import_id TEXT
 );

@@ -1,4 +1,4 @@
-CREATE TYPE public.stop_times_type AS TABLE (
+CREATE TYPE public.stop_times_type AS (
     data_origin TEXT,
     trip_id TEXT,
     stop_id TEXT,
@@ -11,6 +11,6 @@ CREATE TYPE public.stop_times_type AS TABLE (
     shape_dist_travelled DOUBLE PRECISION,
     timepoint_type INT,
     internal_id TEXT,
-    last_updated TIMESTAMPTZ,
+    last_updated timestamp with time zone,
     import_id TEXT
 );

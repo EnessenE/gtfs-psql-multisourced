@@ -1,4 +1,4 @@
-CREATE TYPE public.trips_type AS TABLE (
+CREATE TYPE public.trips_type AS (
     data_origin TEXT,
     id TEXT,
     route_id TEXT,
@@ -10,6 +10,6 @@ CREATE TYPE public.trips_type AS TABLE (
     shape_id TEXT,
     accessibility_type INT,
     internal_id TEXT,
-    last_updated TIMESTAMPTZ,
+    last_updated timestamp with time zone,
     import_id TEXT
 );

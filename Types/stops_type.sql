@@ -1,4 +1,4 @@
-CREATE TYPE public.stops_type AS TABLE (
+CREATE TYPE public.stops_type AS (
     data_origin TEXT,
     id TEXT,
     code TEXT,
@@ -17,6 +17,6 @@ CREATE TYPE public.stops_type AS TABLE (
     platform_code TEXT,
     stop_type TEXT,
     internal_id TEXT,
-    last_updated TIMESTAMPTZ,
+    last_updated timestamp with time zone,
     import_id TEXT
 );
