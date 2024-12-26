@@ -1,6 +1,7 @@
 CREATE TYPE public.calenders_type AS (
     data_origin TEXT,
     service_id TEXT,
+    mask TEXT,
     monday BOOLEAN,
     tuesday BOOLEAN,
     wednesday BOOLEAN,

@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.shapes
     distance_travelled double precision,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_shapes PRIMARY KEY (internal_id, data_origin, id, sequence)
+    CONSTRAINT pk_shapes PRIMARY KEY (data_origin, id, sequence)
 )
 
 TABLESPACE pg_default;
