@@ -1,0 +1,21 @@
+CREATE TYPE public.stops_type AS (
+    data_origin TEXT,
+    id TEXT,
+    code TEXT,
+    name TEXT,
+    description TEXT,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    zone TEXT,
+    url TEXT,
+    location_type_data INT,
+    parent_station TEXT,
+    timezone TEXT,
+    wheelchair_boarding_data INT,
+    level_id TEXT,
+    platform_code TEXT,
+    stop_type_data int,
+    internal_id uuid,
+    last_updated timestamp with time zone,
+    import_id uuid
+);
