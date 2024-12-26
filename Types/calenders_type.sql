@@ -8,9 +8,9 @@ CREATE TYPE public.calenders_type AS (
     friday BOOLEAN,
     saturday BOOLEAN,
     sunday BOOLEAN,
-    start_date DATE,
-    end_date DATE,
-    internal_id TEXT,
-    last_updated TIMESTAMP,
-    import_id TEXT
+    start_date timestamp with time zone,
+    end_date timestamp with time zone,
+    internal_id uuid,
+    last_updated timestamp with time zone,
+    import_id uuid
 );

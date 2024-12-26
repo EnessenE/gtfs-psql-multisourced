@@ -5,7 +5,7 @@ CREATE TYPE public.frequencies_type AS (
     end_time TIME,
     headway_secs INT,
     exact_times INT,
-    internal_id TEXT,
+    internal_id uuid,
     last_updated timestamp with time zone,
-    import_id TEXT
+    import_id uuid
 );

@@ -1,6 +1,6 @@
--- Upsert Procedure for Agencies
+DROP PROCEDURE upsert_agencies(agencies_type[]);
 CREATE OR REPLACE PROCEDURE public.upsert_agencies(
-    agencies public.agencies_type
+    _agencies public.agencies_type[]
 )
 LANGUAGE plpgsql
 AS $$
@@ -8,11 +8,23 @@ BEGIN
     INSERT INTO public.agencies(
         data_origin, id, name, url, timezone, language_code, phone, fare_url, email, internal_id, last_updated, import_id
     )
-    SELECT data_origin, id, name, url, timezone, language_code, phone, fare_url, email, internal_id, last_updated, import_id
-    FROM agencies
-    ON CONFLICT(id, data_origin) DO UPDATE
+    SELECT 
+        agency.data_origin,
+        agency.id,
+        agency.name,
+        agency.url,
+        agency.timezone,
+        agency.language_code,
+        agency.phone,
+        agency.fare_url,
+        agency.email,
+        agency.internal_id,
+        agency.last_updated,
+        agency.import_id
+    FROM unnest(_agencies) AS agency
+    ON CONFLICT (id, data_origin) 
+    DO UPDATE
     SET
-        data_origin = EXCLUDED.data_origin,
         name = EXCLUDED.name,
         url = EXCLUDED.url,
         timezone = EXCLUDED.timezone,

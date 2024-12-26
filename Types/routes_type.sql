@@ -5,11 +5,11 @@ CREATE TYPE public.routes_type AS (
     short_name TEXT,
     long_name TEXT,
     description TEXT,
-    type INT,
+    route_type integer,
     url TEXT,
     color TEXT,
     text_color TEXT,
-    internal_id TEXT,
+    internal_id uuid,
     last_updated timestamp with time zone,
-    import_id TEXT
+    import_id uuid
 );

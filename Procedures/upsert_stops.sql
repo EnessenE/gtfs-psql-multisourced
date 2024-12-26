@@ -1,5 +1,7 @@
+DROP PROCEDURE IF EXISTS public.upsert_stops;
+
 CREATE OR REPLACE PROCEDURE public.upsert_stops(
-    stops public.stops_type
+    _stops public.stops_type[]
 )
 LANGUAGE plpgsql
 AS $$
@@ -7,10 +9,30 @@ BEGIN
     INSERT INTO public.stops(
         data_origin, id, code, name, description, latitude, longitude, geo_location, zone, url, location_type, parent_station, timezone, wheelchair_boarding, level_id, platform_code, stop_type, internal_id, last_updated, import_id
     )
-    SELECT data_origin, id, code, name, description, latitude, longitude, geo_location, zone, url, location_type, parent_station, timezone, wheelchair_boarding, level_id, platform_code, stop_type, internal_id, last_updated, import_id
-    FROM stops
-    ON CONFLICT(id, data_origin) DO UPDATE
-    SET
+    SELECT 
+        _stop.data_origin, 
+        _stop.id, 
+        _stop.code, 
+        _stop.name, 
+        _stop.description, 
+        _stop.latitude, 
+        _stop.longitude, 
+        ST_SetSRID(ST_MakePoint(_stop.longitude, _stop.latitude), 4326), 
+        _stop.zone, 
+        _stop.url, 
+        _stop.location_type_data, 
+        _stop.parent_station, 
+        _stop.timezone, 
+        _stop.wheelchair_boarding_data, 
+        _stop.level_id, 
+        _stop.platform_code, 
+        _stop.stop_type_data, 
+        _stop.internal_id, 
+        _stop.last_updated, 
+        _stop.import_id
+    FROM UNNEST(_stops) AS _stop
+    ON CONFLICT (id, data_origin) DO UPDATE
+    SET 
         data_origin = EXCLUDED.data_origin,
         code = EXCLUDED.code,
         name = EXCLUDED.name,

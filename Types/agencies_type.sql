@@ -8,7 +8,7 @@ CREATE TYPE public.agencies_type AS (
     phone TEXT,
     fare_url TEXT,
     email TEXT,
-    internal_id TEXT,
+    internal_id uuid,
     last_updated timestamp with time zone,
-    import_id TEXT
+    import_id uuid
 );

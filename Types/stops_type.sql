@@ -6,17 +6,16 @@ CREATE TYPE public.stops_type AS (
     description TEXT,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
-    geo_location TEXT,
     zone TEXT,
     url TEXT,
-    location_type INT,
+    location_type_data INT,
     parent_station TEXT,
     timezone TEXT,
-    wheelchair_boarding INT,
+    wheelchair_boarding_data INT,
     level_id TEXT,
     platform_code TEXT,
-    stop_type TEXT,
-    internal_id TEXT,
+    stop_type_data int,
+    internal_id uuid,
     last_updated timestamp with time zone,
-    import_id TEXT
+    import_id uuid
 );

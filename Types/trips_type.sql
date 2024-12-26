@@ -5,11 +5,11 @@ CREATE TYPE public.trips_type AS (
     service_id TEXT,
     headsign TEXT,
     short_name TEXT,
-    direction TEXT,
+    direction_type int,
     block_id TEXT,
     shape_id TEXT,
-    accessibility_type INT,
-    internal_id TEXT,
+    accessibility_type_data INT,
+    internal_id uuid,
     last_updated timestamp with time zone,
-    import_id TEXT
+    import_id uuid
 );

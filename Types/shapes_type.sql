@@ -1,5 +1,5 @@
 CREATE TYPE public.shapes_type AS (
-    internal_id TEXT,
+    internal_id uuid,
     data_origin TEXT,
     id TEXT,
     sequence INT,
@@ -8,5 +8,5 @@ CREATE TYPE public.shapes_type AS (
     geo_location TEXT,
     distance_travelled DOUBLE PRECISION,
     last_updated timestamp with time zone,
-    import_id TEXT
+    import_id uuid
 );
