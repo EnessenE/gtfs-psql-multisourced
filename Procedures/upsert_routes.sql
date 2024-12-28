@@ -9,7 +9,7 @@ BEGIN
     INSERT INTO public.routes (
         data_origin, id, agency_id, short_name, long_name, description, type, url, color, text_color, internal_id, last_updated, import_id
     )
-    SELECT 
+    SELECT DISTINCT
         _route.data_origin, 
         _route.id, 
         _route.agency_id, 
@@ -30,7 +30,7 @@ BEGIN
         short_name = EXCLUDED.short_name,
         long_name = EXCLUDED.long_name,
         description = EXCLUDED.description,
-        type = _route.type,
+        type = EXCLUDED.type,
         url = EXCLUDED.url,
         color = EXCLUDED.color,
         text_color = EXCLUDED.text_color,

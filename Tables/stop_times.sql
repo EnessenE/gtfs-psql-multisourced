@@ -48,14 +48,6 @@ CREATE INDEX IF NOT EXISTS ix_stop_times_import_id_data_origin
     TABLESPACE pg_default;
 -- Index: ix_stop_times_internal_id
 
--- DROP INDEX IF EXISTS public.ix_stop_times_internal_id;
-
-CREATE INDEX IF NOT EXISTS ix_stop_times_internal_id
-    ON public.stop_times USING btree
-    (internal_id ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: ix_stop_times_stop_id
-
 -- DROP INDEX IF EXISTS public.ix_stop_times_stop_id;
 
 CREATE INDEX IF NOT EXISTS ix_stop_times_stop_id
@@ -70,3 +62,7 @@ CREATE INDEX IF NOT EXISTS ix_stop_times_trip_id_data_origin
     ON public.stop_times USING btree
     (trip_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+
+CREATE UNIQUE INDEX idx_stop_times_unique 
+ON public.stop_times (data_origin, trip_id, stop_id, stop_sequence);

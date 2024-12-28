@@ -63,15 +63,6 @@ CREATE INDEX IF NOT EXISTS ix_stops_id_data_origin_stop_type
     ON public.stops USING btree
     (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST, stop_type ASC NULLS LAST)
     TABLESPACE pg_default;
--- Index: ix_stops_id_data_origin_stop_type_platform_code
-
--- DROP INDEX IF EXISTS public.ix_stops_id_data_origin_stop_type_platform_code;
-
-CREATE INDEX IF NOT EXISTS ix_stops_id_data_origin_stop_type_platform_code
-    ON public.stops USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST, stop_type ASC NULLS LAST, platform_code COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: ix_stops_id_parent_station
 
 -- DROP INDEX IF EXISTS public.ix_stops_id_parent_station;
 
@@ -113,22 +104,6 @@ CREATE INDEX IF NOT EXISTS ix_stops_internal_id_stop_type
     TABLESPACE pg_default;
 -- Index: ix_stops_name
 
--- DROP INDEX IF EXISTS public.ix_stops_name;
-
-CREATE INDEX IF NOT EXISTS ix_stops_name
-    ON public.stops USING btree
-    (name COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: ix_stops_name_parent_station
-
--- DROP INDEX IF EXISTS public.ix_stops_name_parent_station;
-
-CREATE INDEX IF NOT EXISTS ix_stops_name_parent_station
-    ON public.stops USING btree
-    (name COLLATE pg_catalog."default" ASC NULLS LAST, parent_station COLLATE pg_catalog."default" ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: ix_stops_name_stop_type
-
 -- DROP INDEX IF EXISTS public.ix_stops_name_stop_type;
 
 CREATE INDEX IF NOT EXISTS ix_stops_name_stop_type
@@ -159,3 +134,6 @@ CREATE INDEX IF NOT EXISTS stops_hash_stop_type
     ON public.stops USING hash
     (stop_type)
     TABLESPACE pg_default;
+
+
+CREATE INDEX ix_stops_name ON stops USING GIST (name gist_trgm_ops);

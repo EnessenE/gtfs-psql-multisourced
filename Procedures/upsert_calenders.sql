@@ -1,12 +1,15 @@
--- Upsert procedure for calendar
-CREATE OR REPLACE PROCEDURE public.upsert_calenders(calendars public.calenders_type[])
+DROP PROCEDURE IF EXISTS public.upsert_calendars;
+
+CREATE OR REPLACE PROCEDURE public.upsert_calendars(
+    _calendars public.calenders_type[]
+)
 LANGUAGE plpgsql
 AS $$
 BEGIN
     INSERT INTO public.calenders (
         data_origin,
         service_id,
-		mask,
+        mask,
         monday,
         tuesday,
         wednesday,
@@ -20,7 +23,7 @@ BEGIN
         last_updated,
         import_id
     )
-    SELECT 
+    SELECT DISTINCT
         calendar.data_origin,
         calendar.service_id,
         calendar.mask,
@@ -36,10 +39,9 @@ BEGIN
         calendar.internal_id,
         calendar.last_updated,
         calendar.import_id
-    FROM unnest(calendars) AS calendar
-    ON CONFLICT (data_origin, service_id) -- Assuming 'service_id' is the unique key
-    DO UPDATE SET
-        data_origin = EXCLUDED.data_origin,
+    FROM UNNEST(_calendars) AS calendar
+    ON CONFLICT (data_origin, service_id) DO UPDATE
+    SET
         mask = EXCLUDED.mask,
         monday = EXCLUDED.monday,
         tuesday = EXCLUDED.tuesday,
@@ -54,4 +56,4 @@ BEGIN
         last_updated = EXCLUDED.last_updated,
         import_id = EXCLUDED.import_id;
 END;
-$$
+$$;

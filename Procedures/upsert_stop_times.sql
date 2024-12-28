@@ -6,8 +6,10 @@ CREATE OR REPLACE PROCEDURE public.upsert_stop_times(
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    -- Use an array of DISTINCT entries and insert/update using ON CONFLICT
     INSERT INTO public.stop_times(
-        data_origin, trip_id, stop_id, stop_sequence, arrival_time, departure_time, stop_headsign, pickup_type, drop_off_type, shape_dist_travelled, timepoint_type, internal_id, last_updated, import_id
+        data_origin, trip_id, stop_id, stop_sequence, arrival_time, departure_time, stop_headsign,
+        pickup_type, drop_off_type, shape_dist_travelled, timepoint_type, internal_id, last_updated, import_id
     )
     SELECT 
         _stop_time.data_origin, 
@@ -25,11 +27,8 @@ BEGIN
         _stop_time.last_updated, 
         _stop_time.import_id
     FROM UNNEST(_stop_times) AS _stop_time
-    ON CONFLICT(data_origin, trip_id, stop_id, stop_sequence) DO UPDATE
-    SET
-        data_origin = EXCLUDED.data_origin,
-        stop_id = EXCLUDED.stop_id,
-        stop_sequence = EXCLUDED.stop_sequence,
+    ON CONFLICT (data_origin, trip_id, stop_id, stop_sequence) 
+    DO UPDATE SET
         arrival_time = EXCLUDED.arrival_time,
         departure_time = EXCLUDED.departure_time,
         stop_headsign = EXCLUDED.stop_headsign,
@@ -39,6 +38,17 @@ BEGIN
         timepoint_type = EXCLUDED.timepoint_type,
         internal_id = EXCLUDED.internal_id,
         last_updated = EXCLUDED.last_updated,
-        import_id = EXCLUDED.import_id;
+        import_id = EXCLUDED.import_id
+    WHERE 
+        stop_times.arrival_time IS DISTINCT FROM EXCLUDED.arrival_time OR
+        stop_times.departure_time IS DISTINCT FROM EXCLUDED.departure_time OR
+        stop_times.stop_headsign IS DISTINCT FROM EXCLUDED.stop_headsign OR
+        stop_times.pickup_type IS DISTINCT FROM EXCLUDED.pickup_type OR
+        stop_times.drop_off_type IS DISTINCT FROM EXCLUDED.drop_off_type OR
+        stop_times.shape_dist_travelled IS DISTINCT FROM EXCLUDED.shape_dist_travelled OR
+        stop_times.timepoint_type IS DISTINCT FROM EXCLUDED.timepoint_type OR
+        stop_times.internal_id IS DISTINCT FROM EXCLUDED.internal_id OR
+        stop_times.last_updated IS DISTINCT FROM EXCLUDED.last_updated OR
+        stop_times.import_id IS DISTINCT FROM EXCLUDED.import_id;
 END;
 $$;
