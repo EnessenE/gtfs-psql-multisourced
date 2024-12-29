@@ -14,10 +14,16 @@ CREATE TABLE IF NOT EXISTS public.shapes
     distance_travelled double precision,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_shapes PRIMARY KEY (data_origin, id, sequence)
+    CONSTRAINT pk_shapes PRIMARY KEY (internal_id)
 )
-
 TABLESPACE pg_default;
+
+
+ALTER TABLE shapes
+ADD CONSTRAINT unique_shapes UNIQUE (data_origin, id, sequence, import_id);
+
+CREATE UNIQUE INDEX ix_unique_stop_times ON shapes (data_origin, id, sequence, import_id);
+
 
 ALTER TABLE IF EXISTS public.shapes
     OWNER to postgres;

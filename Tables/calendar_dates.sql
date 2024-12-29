@@ -11,10 +11,15 @@ CREATE TABLE IF NOT EXISTS public.calendar_dates
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_calendar_dates PRIMARY KEY (data_origin, date, service_id)
+    CONSTRAINT pk_calendar_dates PRIMARY KEY (internal_id)
 )
 
 TABLESPACE pg_default;
+
+ALTER TABLE calendar_dates
+ADD CONSTRAINT unique_calendar_dates UNIQUE (data_origin, date, service_id import_id);
+
+CREATE UNIQUE INDEX ix_unique_calendar_dates ON calendar_dates (data_origin, date, service_id import_id);
 
 ALTER TABLE IF EXISTS public.calendar_dates
     OWNER to postgres;

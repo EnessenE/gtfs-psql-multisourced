@@ -18,14 +18,14 @@ CREATE TABLE IF NOT EXISTS public.stop_times
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_stop_times PRIMARY KEY (data_origin, trip_id, stop_id, stop_sequence)
+    CONSTRAINT pk_stop_times PRIMARY KEY (internal_id)
 );
 
 
-ALTER TABLE calendar_dates
-ADD CONSTRAINT unique_calendar_dates UNIQUE (data_origin, date, service_id);
+ALTER TABLE stop_times
+ADD CONSTRAINT unique_stop_times UNIQUE (data_origin, trip_id, stop_id, stop_sequence, import_id);
 
-CREATE UNIQUE INDEX unique_calendar_dates_idx ON calendar_dates (data_origin, date, service_id);
+CREATE UNIQUE INDEX ix_unique_stop_times ON stop_times (data_origin, trip_id, stop_id, stop_sequence, import_id);
 
 
 ALTER TABLE IF EXISTS public.stop_times

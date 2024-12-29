@@ -17,8 +17,15 @@ CREATE TABLE IF NOT EXISTS public.trips
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_trips PRIMARY KEY (data_origin, id)
+    CONSTRAINT pk_trips PRIMARY KEY (internal_id)
 )
+
+
+ALTER TABLE trips
+ADD CONSTRAINT unique_trips UNIQUE (data_origin, id, import_id);
+
+CREATE UNIQUE INDEX ix_unique_trips ON trips (data_origin, id, import_id);
+
 
 TABLESPACE pg_default;
 
