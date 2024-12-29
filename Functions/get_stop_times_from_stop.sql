@@ -65,7 +65,7 @@ routes.description,
 routes.color,
 routes.text_color,
 stops.stop_type,
-(trip_updates_stop_times.trip_id IS NOT NULL)
+(trip_updates_stop_times.trip_id IS NOT NULL or position_entities.trip_id is not null)
 FROM
     trips
     INNER JOIN routes ON trips.route_id = routes.id
@@ -84,6 +84,8 @@ FROM
     LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
         AND trip_updates_stop_times.data_origin = trips.data_origin
         AND trip_updates_stop_times.stop_id = stops.id
+    LEFT JOIN position_entities ON trips.id = position_entities.trip_id
+        AND position_entities.data_origin = trips.data_origin
 WHERE
     --parent_station / station filter
 (primary_stop = target)
