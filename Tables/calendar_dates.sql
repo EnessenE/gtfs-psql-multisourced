@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS public.calendar_dates
 TABLESPACE pg_default;
 
 ALTER TABLE calendar_dates
-ADD CONSTRAINT unique_calendar_dates UNIQUE (data_origin, date, service_id import_id);
+ADD CONSTRAINT unique_calendar_dates UNIQUE (data_origin, date, service_id, import_id);
 
-CREATE UNIQUE INDEX ix_unique_calendar_dates ON calendar_dates (data_origin, date, service_id import_id);
+CREATE UNIQUE INDEX ix_unique_calendar_dates ON calendar_dates (data_origin, date, service_id, import_id);
 
 ALTER TABLE IF EXISTS public.calendar_dates
     OWNER to postgres;

@@ -27,7 +27,7 @@ BEGIN
         _trip.last_updated, 
         _trip.import_id
     FROM UNNEST(_trips) AS _trip
-    ON CONFLICT (data_origin, id)  -- Specify the unique constraint based on 'data_origin' and 'id'
+    ON CONFLICT (data_origin, id, import_id)
     DO NOTHING;  -- Ignore the conflict, effectively skipping duplicate entries
 END;
 $$;
