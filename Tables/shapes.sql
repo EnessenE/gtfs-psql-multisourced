@@ -35,14 +35,6 @@ CREATE INDEX IF NOT EXISTS ix_shapes_id_data_origin
     ON public.shapes USING btree
     (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
--- Index: ix_shapes_id_data_origin_sequence
-
--- DROP INDEX IF EXISTS public.ix_shapes_id_data_origin_sequence;
-
-CREATE INDEX IF NOT EXISTS ix_shapes_id_data_origin_sequence
-    ON public.shapes USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST, sequence ASC NULLS LAST)
-    TABLESPACE pg_default;
 -- Index: ix_shapes_import_id_data_origin
 
 -- DROP INDEX IF EXISTS public.ix_shapes_import_id_data_origin;

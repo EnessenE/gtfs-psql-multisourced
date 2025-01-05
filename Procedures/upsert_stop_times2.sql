@@ -1,14 +1,14 @@
--- PROCEDURE: public.upsert_stop_times(stop_times_type[])
+-- PROCEDURE: public.upsert_stop_times(stop_times2_type[])
 
--- DROP PROCEDURE IF EXISTS public.upsert_stop_times(stop_times_type[]);
+-- DROP PROCEDURE IF EXISTS public.upsert_stop_times(stop_times2_type[]);
 
-CREATE OR REPLACE PROCEDURE public.upsert_stop_times(
+CREATE OR REPLACE PROCEDURE public.upsert_stop_times2(
     IN _stop_times stop_times_type[]
 )
 LANGUAGE 'plpgsql'
 AS $BODY$
 BEGIN
-    INSERT INTO public.stop_times (
+    INSERT INTO public.stop_times2 (
         data_origin, trip_id, stop_id, stop_sequence, arrival_time, departure_time, stop_headsign,
         pickup_type, drop_off_type, shape_dist_travelled, timepoint_type, internal_id, last_updated, import_id
     )
@@ -27,11 +27,9 @@ BEGIN
         _stop_time.internal_id, 
         _stop_time.last_updated, 
         _stop_time.import_id
-    FROM UNNEST(_stop_times) AS _stop_time
-    ON CONFLICT (data_origin, trip_id, stop_id, stop_sequence, import_id) 
-    DO NOTHING;  -- Ignore the conflict, effectively skipping duplicate entries
+    FROM UNNEST(_stop_times) AS _stop_time;
 END;
 $BODY$;
 
-ALTER PROCEDURE public.upsert_stop_times(stop_times_type[])
+ALTER PROCEDURE public.upsert_stop_times2(stop_times_type[])
     OWNER TO postgres;

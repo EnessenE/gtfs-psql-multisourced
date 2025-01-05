@@ -5,22 +5,22 @@ LANGUAGE 'plpgsql'
 AS $BODY$
 BEGIN
     DELETE FROM position_entities
-    WHERE last_updated < now () - INTERVAL '1 hour';
+    WHERE last_updated < now () - INTERVAL '20 minutes';
 
     DELETE FROM alert_entities
-    WHERE last_updated < now () - INTERVAL '1 hour';
+    WHERE last_updated < now () - INTERVAL '20 minutes';
 
     DELETE FROM alerts
-    WHERE last_updated < now () - INTERVAL '1 hour';
+    WHERE last_updated < now () - INTERVAL '20 minutes';
 
     DELETE FROM trip_updates
-    WHERE last_updated < now () - INTERVAL '1 hour';
+    WHERE last_updated < now () - INTERVAL '20 minutes';
 
     DELETE FROM trip_updates_stop_times
-    WHERE last_updated < now () - INTERVAL '1 hour';
+    WHERE last_updated < now () - INTERVAL '20 minutes';
 
     DELETE FROM alerts
-    WHERE last_updated < now () - INTERVAL '1 hour';
+    WHERE last_updated < now () - INTERVAL '20 minutes';
 END;
 $BODY$;
 

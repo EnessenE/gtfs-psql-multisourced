@@ -1,6 +1,6 @@
-DROP PROCEDURE IF EXISTS public.upsert_calendars;
+DROP PROCEDURE IF EXISTS public.upsert_calenders;
 
-CREATE OR REPLACE PROCEDURE public.upsert_calendars(
+CREATE OR REPLACE PROCEDURE public.upsert_calenders(
     _calendars public.calenders_type[]
 )
 LANGUAGE plpgsql

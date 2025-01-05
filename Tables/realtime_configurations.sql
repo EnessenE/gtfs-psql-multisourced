@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS public.realtime_configurations
     last_attempt timestamp with time zone NULL,
     enabled boolean DEFAULT true,
     url text NOT NULL,
+    header_secret text NULL,
+    secret text NULL,
     CONSTRAINT realtime_configuration_pkey PRIMARY KEY (supplier_configuration_name, url)
 )
 
