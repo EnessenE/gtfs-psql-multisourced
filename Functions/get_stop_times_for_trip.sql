@@ -46,7 +46,7 @@ trip_updates_stop_times.schedule_relationship,
     stop_times.drop_off_type,
     stops.stop_type
 FROM
-    stop_times
+    stop_times2 as stop_times
     JOIN stops ON stop_times.stop_id = stops.id and stop_times.data_origin = stops.data_origin
     JOIN trips ON trips.id = stop_times.trip_id and trips.data_origin = stop_times.data_origin
     LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id

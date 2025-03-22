@@ -70,7 +70,7 @@ FROM
     trips
     INNER JOIN routes ON trips.route_id = routes.id
         AND trips.data_origin = routes.data_origin
-    INNER JOIN stop_times ON stop_times.trip_id = trips.id
+    INNER JOIN stop_times2 as stop_times ON stop_times.trip_id = trips.id
         AND stop_times.data_origin = trips.data_origin
     INNER JOIN stops ON stop_times.stop_id = stops.id
         AND stop_times.data_origin = stops.data_origin
@@ -113,7 +113,7 @@ WHERE
         SELECT
             1
         FROM
-            stop_times st2
+            stop_times2 st2
         WHERE
             st2.data_origin = stop_times.data_origin
             AND st2.trip_id = stop_times.trip_id

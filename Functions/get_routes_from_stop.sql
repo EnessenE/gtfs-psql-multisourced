@@ -31,7 +31,7 @@ stop_data AS(
         trip_id,
         data_origin
     FROM
-        stop_times
+        stop_times2
     WHERE(stop_id,
         data_origin) IN(
         SELECT

@@ -27,7 +27,8 @@ CREATE OR REPLACE FUNCTION public.get_all_feeds()
 		(select count(*) from stops where stops.data_origin = supplier_configurations.name) stops,
 		(select count(*) from routes where routes.data_origin = supplier_configurations.name) routes,
 		(select count(*) from agencies where agencies.data_origin = supplier_configurations.name) agencies,
-		(select count(*) from stop_times2 where stop_times2.data_origin = supplier_configurations.name) stop_times,
+		-- (select count(*) from stop_times2 where stop_times2.data_origin = supplier_configurations.name) stop_times,
+        0,
 		(select count(*) from trips where trips.data_origin = supplier_configurations.name) trips,
 		(select count(*) from realtime_configurations where realtime_configurations.supplier_configuration_name = supplier_configurations.name AND realtime_configurations.enabled) > 0
     FROM

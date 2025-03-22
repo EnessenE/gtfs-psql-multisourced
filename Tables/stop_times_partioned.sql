@@ -57,3 +57,9 @@ CREATE INDEX IF NOT EXISTS ix_stop_times2_stop_id
 CREATE INDEX IF NOT EXISTS ix_stop_times2_trip_id_data_origin
     ON public.stop_times2 USING btree
     (trip_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST);
+
+-- DROP INDEX IF EXISTS public.ix_stop_times2_stop_id_data_origin;
+
+CREATE INDEX IF NOT EXISTS ix_stop_times2_stop_id_data_origin
+    ON public.stop_times2 USING btree
+    (stop_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST);

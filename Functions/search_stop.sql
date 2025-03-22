@@ -17,7 +17,7 @@ WITH filtered_stops AS (
         s.name,
         s.stop_type,
         ARRAY[s.longitude, s.latitude] AS coordinate,
-        strict_word_similarity(s.name, LOWER(target)) AS similarity
+        word_similarity(s.name, LOWER(target)) AS similarity
     FROM 
         public.related_stops rs
     INNER JOIN 
@@ -26,6 +26,8 @@ WITH filtered_stops AS (
     WHERE 
         s.stop_type != 1000
         AND word_similarity(s.name, LOWER(target)) >= 0.4
+	ORDER BY similarity DESC;
+
 )
 SELECT 
     name,
@@ -37,7 +39,7 @@ FROM
 GROUP BY 
     name, stop_type, primary_stop
 ORDER BY 
-    MAX(similarity) DESC
+    similarity DESC
 LIMIT 100;
 
 $BODY$;
