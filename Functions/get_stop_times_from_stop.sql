@@ -1,7 +1,10 @@
--- FUNCTION: public.get_stop_times_from_stop(uuid, integer, timestamp with time zone)
 DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(uuid, integer, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_stop_type integer, from_time timestamp with time zone)
+CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
+    target_stop_id uuid,
+    target_stop_type integer,
+    from_time timestamp with time zone
+)
     RETURNS TABLE(
         trip_id text,
         arrival_time timestamp with time zone,
@@ -27,110 +30,136 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target uuid, target_s
         route_color text,
         route_text_color text,
         stop_type bigint,
-        real_time boolean)
+        real_time boolean
+    )
     LANGUAGE 'sql'
-    COST 500 VOLATILE PARALLEL UNSAFE ROWS 100
-    AS $BODY$
-    SELECT
-        trips.internal_id,
-        -- TO FIX FOR PICKUP/DROPOFF WINDOWS AND CALENDERS
-(coalesce(calendar_dates.date,(
-                    SELECT
-                        CURRENT_DATE)) + stop_times.arrival_time) AT time zone 'UTC' AS arrival_time,
-(coalesce(calendar_dates.date,(
-                    SELECT
-                        CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' AS departure_time,
-(coalesce(calendar_dates.date,(
-                SELECT
-                    CURRENT_DATE)) + stop_times.arrival_time) AT time zone 'UTC' AS planned_arrival_time,
-(coalesce(calendar_dates.date,(
-            SELECT
-                CURRENT_DATE)) + stop_times.departure_time) AT time zone 'UTC' AS planned_departure_time,
-				trip_updates_stop_times.arrival_time AS actual_arrival_time,
-				trip_updates_stop_times.departure_time AS actual_departure_time,
-trip_updates_stop_times.schedule_relationship,
-stop_times.stop_headsign,
-stop_times.data_origin,
-trips.headsign,
-trips.short_name,
-stops.platform_code,
-stops.platform_code,
-trips.service_id,
-routes.short_name,
-routes.long_name,
-coalesce(agencies.name, 'Unknown agency'),
-routes.url,
-routes.type,
-routes.description,
-routes.color,
-routes.text_color,
-stops.stop_type,
-(trip_updates_stop_times.trip_id IS NOT NULL or position_entities.trip_id is not null)
-FROM
-    trips
-    INNER JOIN routes ON trips.route_id = routes.id
-        AND trips.data_origin = routes.data_origin
-    INNER JOIN stop_times2 as stop_times ON stop_times.trip_id = trips.id
-        AND stop_times.data_origin = trips.data_origin
-    INNER JOIN stops ON stop_times.stop_id = stops.id
-        AND stop_times.data_origin = stops.data_origin
-    INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
-    LEFT JOIN agencies ON routes.agency_id = agencies.id
-        AND routes.data_origin = agencies.data_origin
-    LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
-        AND calendar_dates.data_origin = trips.data_origin
-    LEFT JOIN calenders ON trips.service_id = calenders.service_id
-        AND calenders.data_origin = trips.data_origin
-    LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
-        AND trip_updates_stop_times.data_origin = trips.data_origin
-        AND trip_updates_stop_times.stop_id = stops.id
-    LEFT JOIN position_entities ON trips.id = position_entities.trip_id
-        AND position_entities.data_origin = trips.data_origin
+    COST 100
+    STABLE    
+    PARALLEL SAFE 
+    ROWS 100
+AS $BODY$
+WITH 
+-- Pre-calculate date value once
+current_date_cte AS (
+    SELECT CURRENT_DATE AS today
+),
+-- Filter related stops first to reduce initial dataset
+relevant_stops AS (
+    SELECT rs.related_stop 
+    FROM related_stops rs
+    WHERE rs.primary_stop = target_stop_id
+),
+-- Get qualified stop_times first (this is likely the largest table)
+qualified_stop_times AS (
+    SELECT 
+        st.trip_id,
+        st.data_origin,
+        st.stop_id,
+        st.arrival_time,
+        st.departure_time,
+        st.stop_sequence,
+        st.stop_headsign
+    FROM stop_times2 st
+    INNER JOIN stops s ON st.stop_id = s.id AND st.data_origin = s.data_origin
+    WHERE s.internal_id IN (SELECT related_stop FROM relevant_stops)
+      AND s.stop_type = target_stop_type
+      -- Push the "not last stop" filter to this CTE to reduce rows early
+      AND EXISTS (
+          SELECT 1
+          FROM stop_times2 st2
+          WHERE st2.data_origin = st.data_origin
+            AND st2.trip_id = st.trip_id
+            AND st2.stop_sequence > st.stop_sequence
+          LIMIT 1
+      )
+),
+-- Get calendar information separately
+calendar_info AS (
+    SELECT 
+        cd.service_id,
+        cd.data_origin,
+        cd.date,
+        c.start_date,
+        c.end_date,
+        c.sunday, c.monday, c.tuesday, c.wednesday, c.thursday, c.friday, c.saturday
+    FROM calendar_dates cd
+    FULL OUTER JOIN calenders c ON cd.service_id = c.service_id AND cd.data_origin = c.data_origin
+    WHERE 
+        (cd.date::date + '00:00:00'::time WITHOUT TIME ZONE >= from_time::date)
+        OR (
+            c.start_date <= from_time::date
+            AND (c.end_date IS NULL OR c.end_date >= from_time::date)
+            AND CASE EXTRACT(DOW FROM from_time)::integer
+                WHEN 0 THEN c.sunday
+                WHEN 1 THEN c.monday
+                WHEN 2 THEN c.tuesday
+                WHEN 3 THEN c.wednesday
+                WHEN 4 THEN c.thursday
+                WHEN 5 THEN c.friday
+                WHEN 6 THEN c.saturday
+                ELSE FALSE
+            END
+        )
+)
+SELECT
+    t.internal_id,
+    (COALESCE(ci.date, cd.today) + qst.arrival_time) AT TIME ZONE 'UTC' AS arrival_time,
+    (COALESCE(ci.date, cd.today) + qst.departure_time) AT TIME ZONE 'UTC' AS departure_time,
+    (COALESCE(ci.date, cd.today) + qst.arrival_time) AT TIME ZONE 'UTC' AS planned_arrival_time,
+    (COALESCE(ci.date, cd.today) + qst.departure_time) AT TIME ZONE 'UTC' AS planned_departure_time,
+    tust.arrival_time AS actual_arrival_time,
+    tust.departure_time AS actual_departure_time,
+    tust.schedule_relationship,
+    qst.stop_headsign,
+    qst.data_origin,
+    t.headsign,
+    t.short_name,
+    s.platform_code AS planned_platform,
+    s.platform_code AS actual_platform,
+    t.service_id,
+    r.short_name AS route_short_name,
+    r.long_name AS route_long_name,
+    COALESCE(a.name, 'Unknown agency') AS operator,
+    r.url,
+    r.type,
+    r.description,
+    r.color,
+    r.text_color,
+    s.stop_type,
+    (tust.trip_id IS NOT NULL OR pe.trip_id IS NOT NULL) AS real_time
+FROM 
+    qualified_stop_times qst
+    INNER JOIN trips t ON qst.trip_id = t.id AND qst.data_origin = t.data_origin
+    INNER JOIN routes r ON t.route_id = r.id AND t.data_origin = r.data_origin
+    INNER JOIN stops s ON qst.stop_id = s.id AND qst.data_origin = s.data_origin
+    LEFT JOIN agencies a ON r.agency_id = a.id AND r.data_origin = a.data_origin
+    LEFT JOIN calendar_info ci ON t.service_id = ci.service_id AND ci.data_origin = t.data_origin
+    LEFT JOIN trip_updates_stop_times tust ON t.id = tust.trip_id 
+        AND tust.data_origin = t.data_origin
+        AND tust.stop_id = s.id
+    LEFT JOIN position_entities pe ON t.id = pe.trip_id AND pe.data_origin = t.data_origin
+    CROSS JOIN current_date_cte cd
 WHERE
-    --parent_station / station filter
-(primary_stop = target)
-    AND stop_type = target_stop_type
-    --          --Date filter
-    AND(((calendar_dates.date::date + stop_times.arrival_time::time WITHOUT time zone) >= from_time)
-        --18 <= 10
-        OR(calenders.start_date <= from_time
-            AND((EXTRACT(DOW FROM from_time) = 0
-                    AND sunday = TRUE)
-                OR(EXTRACT(DOW FROM from_time) = 1
-                    AND monday = TRUE)
-                OR(EXTRACT(DOW FROM from_time) = 2
-                    AND tuesday = TRUE)
-                OR(EXTRACT(DOW FROM from_time) = 3
-                    AND wednesday = TRUE)
-                OR(EXTRACT(DOW FROM from_time) = 4
-                    AND thursday = TRUE)
-                OR(EXTRACT(DOW FROM from_time) = 5
-                    AND friday = TRUE)
-                OR(EXTRACT(DOW FROM from_time) = 6
-                    AND saturday = TRUE))))
-    --          -- Prevent showing the trip if the current stop is the last stop
-    AND EXISTS(
-        SELECT
-            1
-        FROM
-            stop_times2 st2
-        WHERE
-            st2.data_origin = stop_times.data_origin
-            AND st2.trip_id = stop_times.trip_id
-            AND st2.stop_sequence > stop_times.stop_sequence
-        LIMIT 1)
+    ((ci.date::date + qst.arrival_time::time WITHOUT TIME ZONE) >= from_time
+     OR (
+         ci.start_date <= from_time
+         AND (ci.end_date IS NULL OR ci.end_date >= from_time)
+         AND CASE EXTRACT(DOW FROM from_time)::integer
+             WHEN 0 THEN ci.sunday
+             WHEN 1 THEN ci.monday
+             WHEN 2 THEN ci.tuesday
+             WHEN 3 THEN ci.wednesday
+             WHEN 4 THEN ci.thursday
+             WHEN 5 THEN ci.friday
+             WHEN 6 THEN ci.saturday
+             ELSE FALSE
+         END
+     )
+    )
 ORDER BY
-    coalesce(calendar_dates.date,(
-            SELECT
-                CURRENT_DATE)) + stop_times.arrival_time ASC,
-    stop_times.arrival_time ASC
+    COALESCE(ci.date, cd.today) + qst.arrival_time ASC,
+    qst.arrival_time ASC
 LIMIT 100;
 $BODY$;
 
 ALTER FUNCTION public.get_stop_times_from_stop(uuid, integer, timestamp with time zone) OWNER TO dennis;
-
-SELECT
-    *
-FROM
-    get_stop_times_from_stop('0c1a5d15-f246-4648-b61e-0308c8460adc'::uuid, 1, '2024-10-11 20:40Z');
-

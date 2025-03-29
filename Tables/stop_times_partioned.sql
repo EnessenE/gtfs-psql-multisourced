@@ -46,6 +46,9 @@ CREATE INDEX IF NOT EXISTS ix_stop_times2_arrival_time_departure_time
 
 -- DROP INDEX IF EXISTS public.ix_stop_times2_import_id_data_origin;
 
+CREATE INDEX IF NOT EXISTS ix_stop_times2_arrival_time_range
+    ON public.stop_times2 USING btree (arrival_time);
+
 
 CREATE INDEX IF NOT EXISTS ix_stop_times2_stop_id
     ON public.stop_times2 USING btree

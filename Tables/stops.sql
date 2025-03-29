@@ -134,6 +134,7 @@ CREATE INDEX IF NOT EXISTS stops_hash_stop_type
     ON public.stops USING hash
     (stop_type)
     TABLESPACE pg_default;
+    
 
 
 CREATE INDEX ix_stops_name ON stops USING GIST (name gist_trgm_ops);
