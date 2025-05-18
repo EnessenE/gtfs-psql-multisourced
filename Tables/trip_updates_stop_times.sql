@@ -27,3 +27,6 @@ CREATE INDEX IF NOT EXISTS ix_trip_updates_stop_times_trip_id_data_origin_stop_i
     ON public.trip_updates_stop_times USING btree
     (trip_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST, stop_id COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
+
+
+    CREATE INDEX idx_trip_updates_stop_times_trip_stop ON trip_updates_stop_times(trip_id, stop_id, data_origin);

@@ -53,4 +53,4 @@ ALTER FUNCTION public.nearby_stops(double precision, double precision) OWNER TO 
 SELECT
     *
 FROM
-    public.nearby_stops(51.794179, 4.653556)
+    public.nearby_stops(51.828813619319, 4.743118421124325)

@@ -28,6 +28,9 @@ ALTER TABLE IF EXISTS public.routes
 
 -- DROP INDEX IF EXISTS public.ix_routes_agency_id;
 
+CREATE INDEX idx_routes_id_data_origin ON routes(id, data_origin);
+
+
 CREATE INDEX IF NOT EXISTS ix_routes_agency_id
     ON public.routes USING btree
     (agency_id COLLATE pg_catalog."default" ASC NULLS LAST)

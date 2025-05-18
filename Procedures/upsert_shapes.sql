@@ -29,5 +29,5 @@ BEGIN
 END;
 $$;
 
-ALTER PROCEDURE public.bulk_insert_shapes(shapes_type[])
+ALTER PROCEDURE public.upsert_shapes(shapes_type[])
     OWNER TO postgres;

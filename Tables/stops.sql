@@ -33,6 +33,10 @@ ALTER TABLE IF EXISTS public.stops
     OWNER to postgres;
 -- Index: example1_gpx
 
+CREATE INDEX idx_stops_internal_id_data_origin 
+ON stops(internal_id, data_origin);
+
+
 -- DROP INDEX IF EXISTS public.example1_gpx;
 
 CREATE INDEX IF NOT EXISTS example1_gpx
@@ -137,4 +141,4 @@ CREATE INDEX IF NOT EXISTS stops_hash_stop_type
     
 
 
-CREATE INDEX ix_stops_name ON stops USING GIST (name gist_trgm_ops);
+CREATE INDEX  IF NOT EXISTS ix_stops_name ON stops USING GIST (name gist_trgm_ops);
