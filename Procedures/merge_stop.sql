@@ -1,77 +1,78 @@
-CREATE OR REPLACE PROCEDURE public.merge_stop(IN target text, IN supplier text)
-LANGUAGE 'plpgsql'
+CREATE OR REPLACE PROCEDURE public.merge_stop(IN target text, IN supplier text) 
+LANGUAGE plpgsql
 AS $BODY$
 DECLARE
     stopdata RECORD;
-    temprow RECORD;
     chosen_guid uuid;
+    v_target_geo geometry;
+    v_target_name text;
+    v_target_parent text;
 BEGIN
-    -- Generate a UUID for this merge session
-    SELECT uuid_generate_v4()::uuid INTO chosen_guid;
-    
-    -- Get stopdata record, ensuring it's not already related
-    SELECT * INTO stopdata
-    FROM stops
+    -- Generate a GUID for this merge group
+    SELECT uuid_generate_v4() INTO chosen_guid;
+
+    -- Retrieve the target stop info
+    SELECT *
+    INTO stopdata
+    FROM public.stops
     WHERE id = target
-      AND data_origin = supplier
-      AND NOT EXISTS (
-          SELECT 1
-          FROM related_stops
-          INNER JOIN stops ON stops.internal_id = related_stops.related_stop
-          WHERE stops.id = target
-            AND related_data_origin = supplier
-      );
-    
+      AND data_origin = supplier;
+
     IF NOT FOUND THEN
-        RAISE NOTICE 'Target stop does not exist or is already related.';
+        RAISE NOTICE 'Target stop not found.';
         RETURN;
     END IF;
-    
-    -- Loop through each relevant stop
-    FOR temprow IN
-        SELECT *
-        FROM stops
-        WHERE (
-            ((stopdata.parent_station = stops.id AND stopdata.data_origin = stops.data_origin)
-            OR (stops.id = stopdata.parent_station AND stopdata.data_origin = stops.data_origin))
-            OR ((
-                ST_DWithin(stops.geo_location, stopdata.geo_location, 75, FALSE)
-                OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 300, FALSE) 
-                    AND SIMILARITY(stopdata.name, stops.name) >= 0.2)
-                -- OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 350, FALSE) 
-                --     AND SIMILARITY(stopdata.name, stops.name) >= 0.3)
-                -- OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 400, FALSE) 
-                --     AND SIMILARITY(stopdata.name, stops.name) >= 0.6)
-                -- OR (ST_DWithin(stops.geo_location, stopdata.geo_location, 3000, FALSE) 
-                --     AND SIMILARITY(stopdata.name, stops.name) >= 0.9)
-            ) AND (stopdata.parent_station IS NULL or stopdata.parent_station = '' ) )
-        )
-    LOOP
-        -- Check if temprow is already a related_stop in the related_stops table
-        IF EXISTS (
-            SELECT 1
-            FROM related_stops
-            WHERE related_stop = temprow.internal_id
-        ) THEN
-            -- Insert into related_stops using the primary_stop of the existing relation
-            INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
-                VALUES (
-                    (SELECT primary_stop
-                     FROM related_stops
-                     WHERE related_stop = temprow.internal_id
-                     LIMIT 1),
-                    stopdata.internal_id,
-                    stopdata.data_origin
+
+    -- Check if already merged
+    IF EXISTS (
+         SELECT 1
+         FROM public.related_stops
+         WHERE related_stop = stopdata.internal_id
+    ) THEN
+         RAISE NOTICE 'Target stop already related.';
+         RETURN;
+    END IF;
+
+    -- Cache relevant fields
+    v_target_geo    := stopdata.geo_location;
+    v_target_name   := stopdata.name;
+    v_target_parent := stopdata.parent_station;
+
+    -- Perform spatial and parent/child-based match
+    WITH candidates AS (
+        SELECT s.internal_id, s.data_origin
+        FROM public.stops s
+        WHERE
+            (
+                -- Parent/child match, only if data_origin is the same
+                (v_target_parent IS NOT NULL AND v_target_parent <> '' AND s.data_origin = stopdata.data_origin AND (s.id = v_target_parent OR v_target_parent = s.parent_station))
+            )
+            OR (
+                -- Spatial pre-filter (bounding box)
+                s.geo_location && ST_Expand(v_target_geo, 300)
+                AND (
+                    ST_DWithin(s.geo_location, v_target_geo, 75, FALSE)
+                    OR (
+                        ST_DWithin(s.geo_location, v_target_geo, 300, FALSE)
+                        AND SIMILARITY(s.name, v_target_name) >= 0.2
+                    )
                 )
-            ON CONFLICT DO NOTHING;
-            RETURN;
-        ELSE
-            -- Insert into related_stops using the chosen GUID for new relations
-            INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
-                VALUES (chosen_guid, temprow.internal_id, temprow.data_origin)
-            ON CONFLICT DO NOTHING;
-        END IF;
-    END LOOP;
+                AND (v_target_parent IS NULL OR v_target_parent = '')
+            )
+    )
+    INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
+    SELECT chosen_guid, internal_id, data_origin
+    FROM candidates
+    ON CONFLICT DO NOTHING;
+
+    -- Insert target stop itself if not present
+    IF NOT EXISTS (
+         SELECT 1 FROM public.related_stops WHERE related_stop = stopdata.internal_id
+    ) THEN
+        INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
+        VALUES (chosen_guid, stopdata.internal_id, stopdata.data_origin)
+        ON CONFLICT DO NOTHING;
+    END IF;
 END;
 $BODY$;
 
