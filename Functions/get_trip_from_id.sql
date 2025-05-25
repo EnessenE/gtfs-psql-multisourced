@@ -18,6 +18,7 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
         occupancy_status text,
         occupancy_percentage integer,
         measurement_time timestamp with time zone,
+        enroute_to text,
 		target_stop_id uuid,
 		target_stop text,
 		route_short_name text,
@@ -42,6 +43,7 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
 		position_entities.occupancy_status,
 		position_entities.occupancy_percentage,
 		position_entities.measurement_time,
+ 	    (select primary_stop from related_stops inner join stops on stops.internal_id = related_stops.related_stop where stops.id = position_entities.stop_id and stops.data_origin = trips.data_origin limit 1),		
 		stops.internal_id,
 		stops.name,
 		routes.short_name,
@@ -55,4 +57,4 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
         trips.internal_id = target
 $BODY$;
 
-select * from get_trip_from_id('8cdf5f9f-4a01-4832-acbf-420185066816')
+select * from get_trip_from_id('eb6726c8-0749-4414-b0c5-8e212d70e962');

@@ -1,7 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS public.alerts
 (
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    data_origin text  COLLATE pg_catalog."default" NOT NULL,
     internal_id uuid NOT NULL,
     created timestamp with time zone NOT NULL default (timezone('utc', now())),
     last_updated timestamp with time zone NOT NULL,
