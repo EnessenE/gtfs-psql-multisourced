@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.routes
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     CONSTRAINT pk_routes PRIMARY KEY (data_origin, id)
-)
+);
 
 
 
@@ -33,7 +33,7 @@ CREATE INDEX idx_routes_id_data_origin ON routes(id, data_origin);
 
 CREATE INDEX IF NOT EXISTS ix_routes_agency_id
     ON public.routes USING btree
-    (agency_id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (agency_id COLLATE pg_catalog."default" ASC NULLS LAST);
     
 -- Index: ix_routes_id
 
@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_agency_id
 
 CREATE INDEX IF NOT EXISTS ix_routes_id
     ON public.routes USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id COLLATE pg_catalog."default" ASC NULLS LAST);
     
 -- Index: ix_routes_id_data_origin
 
@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_id
 
 CREATE INDEX IF NOT EXISTS ix_routes_id_data_origin
     ON public.routes USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST);
     
 -- Index: ix_routes_import_id_data_origin
 
@@ -57,7 +57,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_routes_import_id_data_origin
     ON public.routes USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST);
     
 -- Index: ix_routes_internal_id
 
@@ -65,7 +65,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_import_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_routes_internal_id
     ON public.routes USING btree
-    (internal_id ASC NULLS LAST)
+    (internal_id ASC NULLS LAST);
     
 -- Index: ix_routes_long_name
 
@@ -73,7 +73,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_internal_id
 
 CREATE INDEX IF NOT EXISTS ix_routes_long_name
     ON public.routes USING btree
-    (long_name COLLATE pg_catalog."default" ASC NULLS LAST)
+    (long_name COLLATE pg_catalog."default" ASC NULLS LAST);
     
 -- Index: ix_routes_short_name
 
@@ -81,5 +81,5 @@ CREATE INDEX IF NOT EXISTS ix_routes_long_name
 
 CREATE INDEX IF NOT EXISTS ix_routes_short_name
     ON public.routes USING btree
-    (short_name COLLATE pg_catalog."default" ASC NULLS LAST)
+    (short_name COLLATE pg_catalog."default" ASC NULLS LAST);
     

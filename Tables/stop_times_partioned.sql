@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS public.stop_times2
     stop_sequence bigint NOT NULL,
     arrival_time time without time zone,
     departure_time time without time zone,
+    days_since_start_arrival integer not null default(0),
+    days_since_start_departure integer not null default(0),
     stop_headsign text COLLATE pg_catalog."default",
     pickup_type integer,
     drop_off_type integer,
