@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.calendar_dates
 (
     data_origin character varying(100) NOT NULL,
     service_id text NOT NULL,
-    date timestamp with time zone NOT NULL,
+    date date NOT NULL,
     exception_type integer NOT NULL,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,

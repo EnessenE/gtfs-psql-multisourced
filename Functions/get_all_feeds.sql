@@ -1,14 +1,17 @@
+
 drop function get_all_feeds();
 
 CREATE OR REPLACE FUNCTION public.get_all_feeds()
     RETURNS TABLE(
         name text,
         "interval" interval,
-        last_updated timestamp with time zone,
         download_pending boolean,
-        last_attempt timestamp with time zone,
         last_checked timestamp with time zone,
-        last_failure timestamp with time zone,
+        "state" text,
+        last_check_failure timestamp with time zone,
+        last_import_start timestamp with time zone,
+        last_import_success timestamp with time zone,
+        last_import_failure timestamp with time zone,
 		stops int,
 		routes int,
 		agencies int,
@@ -22,11 +25,13 @@ CREATE OR REPLACE FUNCTION public.get_all_feeds()
     SELECT
         supplier_configurations.name,
         supplier_configurations.polling_rate,
-        supplier_configurations.last_updated,
         supplier_configurations.download_pending,
-        supplier_configurations.last_attempt,
         supplier_configurations.last_checked,
-        supplier_configurations.last_attempt,
+        supplier_configurations.state,
+        supplier_configurations.last_check_failure,
+        supplier_configurations.last_import_start,
+        supplier_configurations.last_import_success,
+        supplier_configurations.last_import_failure,
 		(select count(*) from stops where stops.data_origin = supplier_configurations.name) stops,
 		(select count(*) from routes where routes.data_origin = supplier_configurations.name) routes,
 		(select count(*) from agencies where agencies.data_origin = supplier_configurations.name) agencies,
@@ -39,6 +44,5 @@ CREATE OR REPLACE FUNCTION public.get_all_feeds()
         public.supplier_configurations
 $BODY$;
 
-ALTER FUNCTION public.get_all_feeds() OWNER TO dennis;
 
 select * from get_all_feeds();
