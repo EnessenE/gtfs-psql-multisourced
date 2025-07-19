@@ -10,7 +10,7 @@ BEGIN
     DELETE FROM calendar_dates
     WHERE (import_id != target_id or import_id is null) AND data_origin = data_origin_target;
 
-    DELETE FROM calenders
+    DELETE FROM calendars
     WHERE (import_id != target_id or import_id is null) AND data_origin = data_origin_target;
 
     DELETE FROM frequencies

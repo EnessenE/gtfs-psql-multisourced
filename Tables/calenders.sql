@@ -1,8 +1,8 @@
--- Table: public.calenders
+-- Table: public.calendars
 
--- DROP TABLE IF EXISTS public.calenders;
+-- DROP TABLE IF EXISTS public.calendars;
 
-CREATE TABLE IF NOT EXISTS public.calenders
+CREATE TABLE IF NOT EXISTS public.calendars
 (
     data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
     service_id text COLLATE pg_catalog."default" NOT NULL,
@@ -18,34 +18,34 @@ CREATE TABLE IF NOT EXISTS public.calenders
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_calenders PRIMARY KEY (data_origin, service_id)
+    CONSTRAINT pk_calendars PRIMARY KEY (data_origin, service_id)
 )
 
 TABLESPACE pg_default;
 
-ALTER TABLE IF EXISTS public.calenders
+ALTER TABLE IF EXISTS public.calendars
     OWNER to postgres;
--- Index: ix_calenders_import_id_data_origin
+-- Index: ix_calendars_import_id_data_origin
 
--- DROP INDEX IF EXISTS public.ix_calenders_import_id_data_origin;
+-- DROP INDEX IF EXISTS public.ix_calendars_import_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_calenders_import_id_data_origin
-    ON public.calenders USING btree
+CREATE INDEX IF NOT EXISTS ix_calendars_import_id_data_origin
+    ON public.calendars USING btree
     (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;
--- Index: ix_calenders_internal_id
+-- Index: ix_calendars_internal_id
 
--- DROP INDEX IF EXISTS public.ix_calenders_internal_id;
+-- DROP INDEX IF EXISTS public.ix_calendars_internal_id;
 
-CREATE INDEX IF NOT EXISTS ix_calenders_internal_id
-    ON public.calenders USING btree
+CREATE INDEX IF NOT EXISTS ix_calendars_internal_id
+    ON public.calendars USING btree
     (internal_id ASC NULLS LAST)
     TABLESPACE pg_default;
--- Index: ix_calenders_service_id_data_origin
+-- Index: ix_calendars_service_id_data_origin
 
--- DROP INDEX IF EXISTS public.ix_calenders_service_id_data_origin;
+-- DROP INDEX IF EXISTS public.ix_calendars_service_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_calenders_service_id_data_origin
-    ON public.calenders USING btree
+CREATE INDEX IF NOT EXISTS ix_calendars_service_id_data_origin
+    ON public.calendars USING btree
     (service_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
     TABLESPACE pg_default;

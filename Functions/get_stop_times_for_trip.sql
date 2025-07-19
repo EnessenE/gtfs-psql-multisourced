@@ -51,8 +51,8 @@ FROM
     JOIN trips ON trips.id = stop_times.trip_id and trips.data_origin = stop_times.data_origin
     LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
         AND calendar_dates.data_origin = trips.data_origin and calendar_dates.service_id = trips.service_id and date = (SELECT CURRENT_DATE)
-    LEFT JOIN calenders ON trips.service_id = calenders.service_id
-        AND calenders.data_origin = trips.data_origin and calenders.service_id = trips.service_id
+    LEFT JOIN calendars ON trips.service_id = calendars.service_id
+        AND calendars.data_origin = trips.data_origin and calendars.service_id = trips.service_id
     LEFT JOIN trip_updates_stop_times ON trips.id = trip_updates_stop_times.trip_id
         AND trip_updates_stop_times.data_origin = trips.data_origin AND trip_updates_stop_times.stop_id = stops.id
 WHERE

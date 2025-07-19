@@ -1,12 +1,12 @@
-DROP PROCEDURE IF EXISTS public.upsert_calenders;
+DROP PROCEDURE IF EXISTS public.upsert_calendars;
 
-CREATE OR REPLACE PROCEDURE public.upsert_calenders(
-    _calendars public.calenders_type[]
+CREATE OR REPLACE PROCEDURE public.upsert_calendars(
+    _calendars public.calendars_type[]
 )
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    INSERT INTO public.calenders (
+    INSERT INTO public.calendars (
         data_origin,
         service_id,
         monday,

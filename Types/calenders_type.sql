@@ -1,4 +1,4 @@
-CREATE TYPE public.calenders_type AS (
+CREATE TYPE public.calendars_type AS (
     data_origin TEXT,
     service_id TEXT,
     monday BOOLEAN,

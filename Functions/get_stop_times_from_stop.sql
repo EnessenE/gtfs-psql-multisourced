@@ -95,7 +95,7 @@ WHERE
     AND (
         -- Check if service is active in the regular calendar
         EXISTS (
-            SELECT 1 FROM public.calenders c
+            SELECT 1 FROM public.calendars c
             WHERE c.service_id = t.service_id AND c.data_origin = t.data_origin
               AND d.start_of_day >= c.start_date AND d.start_of_day <= c.end_date -- Sargable
               AND CASE EXTRACT(DOW FROM d.start_of_day)::integer
@@ -109,7 +109,7 @@ WHERE
         EXISTS (
             SELECT 1 FROM public.calendar_dates cd
             WHERE cd.service_id = t.service_id AND cd.data_origin = t.data_origin
-              AND cd.exception_type = 1
+              AND cd.exception_type = '1'
               AND cd.date >= d.start_of_day AND cd.date < d.end_of_day -- Sargable
         )
     )
@@ -117,7 +117,7 @@ WHERE
     AND NOT EXISTS (
         SELECT 1 FROM public.calendar_dates cd
         WHERE cd.service_id = t.service_id AND cd.data_origin = t.data_origin
-          AND cd.exception_type = 2
+          AND cd.exception_type = '2'
           AND cd.date >= d.start_of_day AND cd.date < d.end_of_day -- Sargable
     )
 ORDER BY
