@@ -5,7 +5,7 @@ CREATE TYPE public.routes_type AS (
     short_name TEXT,
     long_name TEXT,
     description TEXT,
-    route_type integer,
+    route_type_data integer,
     url TEXT,
     color TEXT,
     text_color TEXT,

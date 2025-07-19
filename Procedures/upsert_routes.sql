@@ -16,7 +16,7 @@ BEGIN
         _route.short_name, 
         _route.long_name, 
         _route.description, 
-        _route.route_type, 
+        _route.route_type_data, 
         _route.url, 
         _route.color, 
         _route.text_color, 

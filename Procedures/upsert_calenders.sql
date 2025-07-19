@@ -9,7 +9,6 @@ BEGIN
     INSERT INTO public.calenders (
         data_origin,
         service_id,
-        mask,
         monday,
         tuesday,
         wednesday,
@@ -26,7 +25,6 @@ BEGIN
     SELECT DISTINCT
         calendar.data_origin,
         calendar.service_id,
-        calendar.mask,
         calendar.monday,
         calendar.tuesday,
         calendar.wednesday,
@@ -42,7 +40,6 @@ BEGIN
     FROM UNNEST(_calendars) AS calendar
     ON CONFLICT (data_origin, service_id) DO UPDATE
     SET
-        mask = EXCLUDED.mask,
         monday = EXCLUDED.monday,
         tuesday = EXCLUDED.tuesday,
         wednesday = EXCLUDED.wednesday,

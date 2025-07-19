@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS public.calenders
 (
     data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
     service_id text COLLATE pg_catalog."default" NOT NULL,
-    mask smallint NOT NULL,
     monday boolean NOT NULL,
     tuesday boolean NOT NULL,
     wednesday boolean NOT NULL,
@@ -14,8 +13,8 @@ CREATE TABLE IF NOT EXISTS public.calenders
     friday boolean NOT NULL,
     saturday boolean NOT NULL,
     sunday boolean NOT NULL,
-    start_date timestamp with time zone NOT NULL,
-    end_date timestamp with time zone NOT NULL,
+    start_date date NOT NULL,
+    end_date date NOT NULL,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
