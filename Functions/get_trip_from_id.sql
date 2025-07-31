@@ -57,4 +57,4 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
         trips.internal_id = target
 $BODY$;
 
-select * from get_trip_from_id('eb6726c8-0749-4414-b0c5-8e212d70e962');
+select * from get_trip_from_id('a515fae9-3087-4412-94c7-8b42d292c29b');

@@ -14,5 +14,4 @@ BEGIN
 END;
 $BODY$;
 
-ALTER PROCEDURE public.filedetector_mark_failed(text, text) OWNER TO dennis;
 

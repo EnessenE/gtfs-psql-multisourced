@@ -31,6 +31,19 @@ BEGIN
         PRIMARY KEY (related_stop, related_data_origin)
     ) ON COMMIT DROP;
 
+    update stops
+    set stop_type = COALESCE((
+        SELECT r.type
+        FROM stop_times2 st
+        JOIN trips t ON st.trip_id = t.id AND st.data_origin = t.data_origin
+        JOIN routes r ON t.route_id = r.id AND t.data_origin = r.data_origin
+        WHERE st.stop_id = p_target_stop_id
+        AND st.data_origin = p_supplier_data_origin
+        LIMIT 1), 1000)
+    where data_origin = p_supplier_data_origin and id = p_target_stop_id;
+
+    RAISE NOTICE 'Route type detection for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;
+
     -- 1. Retrieve the target stop's information
     SELECT
         s.internal_id, geography(s.geo_location), s.name, s.parent_station, s.stop_type, s.data_origin
@@ -106,6 +119,7 @@ BEGIN
     ON CONFLICT (primary_stop, related_stop, related_data_origin) DO NOTHING;
 
     RAISE NOTICE 'Merge process for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;
+
 
     -- The temporary table is automatically dropped here because of ON COMMIT DROP.
 END;

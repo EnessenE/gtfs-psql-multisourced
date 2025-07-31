@@ -109,7 +109,7 @@ WHERE
         EXISTS (
             SELECT 1 FROM public.calendar_dates cd
             WHERE cd.service_id = t.service_id AND cd.data_origin = t.data_origin
-              AND cd.exception_type = '1'
+              AND cd.exception_type = 'Added'
               AND cd.date >= d.start_of_day AND cd.date < d.end_of_day -- Sargable
         )
     )

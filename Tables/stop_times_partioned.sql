@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.stop_times2
     pickup_type integer,
     drop_off_type integer,
     shape_dist_travelled double precision,
-    timepoint_type integer NOT NULL,
+    timepoint_type integer,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
