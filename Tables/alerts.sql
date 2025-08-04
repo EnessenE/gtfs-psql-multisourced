@@ -1,7 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS public.alerts
 (
-    data_origin text  COLLATE pg_catalog."default" NOT NULL,
+    data_origin text  NOT NULL,
     internal_id uuid NOT NULL,
     created timestamp with time zone NOT NULL default (timezone('utc', now())),
     last_updated timestamp with time zone NOT NULL,
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.alerts
 
 CREATE INDEX IF NOT EXISTS ix_alerts_id
     ON public.alerts USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_alerts_id_data_origin
 
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS ix_alerts_id
 
 CREATE INDEX IF NOT EXISTS ix_alerts_id_data_origin
     ON public.alerts USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_alerts_id_data_origin_stop_type
 

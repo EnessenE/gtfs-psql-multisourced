@@ -5,8 +5,8 @@
 CREATE TABLE IF NOT EXISTS public.shapes
 (
     internal_id uuid NOT NULL,
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    id text COLLATE pg_catalog."default" NOT NULL,
+    data_origin character varying(100) NOT NULL,
+    id text NOT NULL,
     sequence bigint NOT NULL,
     latitude double precision NOT NULL,
     longitude double precision NOT NULL,
@@ -33,7 +33,7 @@ ALTER TABLE IF EXISTS public.shapes
 
 CREATE INDEX IF NOT EXISTS ix_shapes_id_data_origin
     ON public.shapes USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_shapes_import_id_data_origin
 
@@ -41,7 +41,7 @@ CREATE INDEX IF NOT EXISTS ix_shapes_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_shapes_import_id_data_origin
     ON public.shapes USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_shapes_internal_id
 

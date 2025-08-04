@@ -4,15 +4,15 @@
 
 CREATE TABLE IF NOT EXISTS public.agencies
 (
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    id text COLLATE pg_catalog."default" NOT NULL,
-    name text COLLATE pg_catalog."default",
-    url text COLLATE pg_catalog."default",
-    timezone text COLLATE pg_catalog."default",
-    language_code text COLLATE pg_catalog."default",
-    phone text COLLATE pg_catalog."default",
-    fare_url text COLLATE pg_catalog."default",
-    email text COLLATE pg_catalog."default",
+    data_origin character varying(100) NOT NULL,
+    id text NOT NULL,
+    name text,
+    url text,
+    timezone text,
+    language_code text,
+    phone text,
+    fare_url text,
+    email text,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
@@ -29,7 +29,7 @@ ALTER TABLE IF EXISTS public.agencies
 
 CREATE INDEX IF NOT EXISTS ix_agencies_id
     ON public.agencies USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_agencies_id_data_origin
 
@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS ix_agencies_id
 
 CREATE INDEX IF NOT EXISTS ix_agencies_id_data_origin
     ON public.agencies USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_agencies_id_name
 
@@ -45,7 +45,7 @@ CREATE INDEX IF NOT EXISTS ix_agencies_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_agencies_id_name
     ON public.agencies USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, name COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST, name ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_agencies_import_id_data_origin
 
@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS ix_agencies_id_name
 
 CREATE INDEX IF NOT EXISTS ix_agencies_import_id_data_origin
     ON public.agencies USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_agencies_internal_id
 

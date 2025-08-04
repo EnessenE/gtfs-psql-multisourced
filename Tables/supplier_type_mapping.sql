@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS public.supplier_type_mappings
 (
-    supplier_configuration_name text COLLATE pg_catalog."default" NOT NULL,
+    supplier_configuration_name text NOT NULL,
     listed_type integer NOT NULL,
     new_type integer,
     CONSTRAINT supplier_type_mapping_pkey PRIMARY KEY (supplier_configuration_name, listed_type)

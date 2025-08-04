@@ -4,11 +4,11 @@
 
 CREATE TABLE IF NOT EXISTS public.frequencies
 (
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    trip_id text COLLATE pg_catalog."default" NOT NULL,
-    start_time text COLLATE pg_catalog."default" NOT NULL,
-    end_time text COLLATE pg_catalog."default" NOT NULL,
-    headway_secs text COLLATE pg_catalog."default",
+    data_origin character varying(100) NOT NULL,
+    trip_id text NOT NULL,
+    start_time text NOT NULL,
+    end_time text NOT NULL,
+    headway_secs text,
     exact_times boolean,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
@@ -26,7 +26,7 @@ ALTER TABLE IF EXISTS public.frequencies
 
 CREATE INDEX IF NOT EXISTS ix_frequencies_import_id_data_origin
     ON public.frequencies USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_frequencies_internal_id
 
@@ -42,5 +42,5 @@ CREATE INDEX IF NOT EXISTS ix_frequencies_internal_id
 
 CREATE INDEX IF NOT EXISTS ix_frequencies_trip_id_data_origin
     ON public.frequencies USING btree
-    (trip_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (trip_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

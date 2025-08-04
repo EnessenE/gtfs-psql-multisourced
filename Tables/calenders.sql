@@ -4,8 +4,8 @@
 
 CREATE TABLE IF NOT EXISTS public.calendars
 (
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    service_id text COLLATE pg_catalog."default" NOT NULL,
+    data_origin character varying(100) NOT NULL,
+    service_id text NOT NULL,
     monday boolean NOT NULL,
     tuesday boolean NOT NULL,
     wednesday boolean NOT NULL,
@@ -31,7 +31,7 @@ ALTER TABLE IF EXISTS public.calendars
 
 CREATE INDEX IF NOT EXISTS ix_calendars_import_id_data_origin
     ON public.calendars USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_calendars_internal_id
 
@@ -47,5 +47,5 @@ CREATE INDEX IF NOT EXISTS ix_calendars_internal_id
 
 CREATE INDEX IF NOT EXISTS ix_calendars_service_id_data_origin
     ON public.calendars USING btree
-    (service_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (service_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

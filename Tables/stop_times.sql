@@ -4,13 +4,13 @@
 
 CREATE TABLE IF NOT EXISTS public.stop_times
 (
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    trip_id text COLLATE pg_catalog."default" NOT NULL,
-    stop_id text COLLATE pg_catalog."default" NOT NULL,
+    data_origin character varying(100) NOT NULL,
+    trip_id text NOT NULL,
+    stop_id text NOT NULL,
     stop_sequence bigint NOT NULL,
     arrival_time time without time zone,
     departure_time time without time zone,
-    stop_headsign text COLLATE pg_catalog."default",
+    stop_headsign text,
     pickup_type integer,
     drop_off_type integer,
     shape_dist_travelled double precision,
@@ -48,7 +48,7 @@ CREATE INDEX IF NOT EXISTS ix_stop_times_arrival_time_departure_time
 
 CREATE INDEX IF NOT EXISTS ix_stop_times_import_id_data_origin
     ON public.stop_times USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_stop_times_internal_id
 
@@ -56,7 +56,7 @@ CREATE INDEX IF NOT EXISTS ix_stop_times_import_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_stop_times_stop_id
     ON public.stop_times USING btree
-    (stop_id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (stop_id ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_stop_times_trip_id_data_origin
 
@@ -64,5 +64,5 @@ CREATE INDEX IF NOT EXISTS ix_stop_times_stop_id
 
 CREATE INDEX IF NOT EXISTS ix_stop_times_trip_id_data_origin
     ON public.stop_times USING btree
-    (trip_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (trip_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

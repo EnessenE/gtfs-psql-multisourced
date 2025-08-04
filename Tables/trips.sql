@@ -4,15 +4,15 @@
 
 CREATE TABLE IF NOT EXISTS public.trips
 (
-    data_origin character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    id text COLLATE pg_catalog."default" NOT NULL,
-    route_id text COLLATE pg_catalog."default",
-    service_id text COLLATE pg_catalog."default",
-    headsign text COLLATE pg_catalog."default",
-    short_name text COLLATE pg_catalog."default",
+    data_origin character varying(100) NOT NULL,
+    id text NOT NULL,
+    route_id text,
+    service_id text,
+    headsign text,
+    short_name text,
     direction integer,
-    block_id text COLLATE pg_catalog."default",
-    shape_id text COLLATE pg_catalog."default",
+    block_id text,
+    shape_id text,
     accessibility_type integer,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
@@ -37,7 +37,7 @@ ALTER TABLE IF EXISTS public.trips
 
 CREATE INDEX IF NOT EXISTS ix_trips_id
     ON public.trips USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_trips_id_data_origin
 
@@ -45,7 +45,7 @@ CREATE INDEX IF NOT EXISTS ix_trips_id
 
 CREATE INDEX IF NOT EXISTS ix_trips_id_data_origin
     ON public.trips USING btree
-    (id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_trips_import_id_data_origin
 
@@ -53,7 +53,7 @@ CREATE INDEX IF NOT EXISTS ix_trips_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_trips_import_id_data_origin
     ON public.trips USING btree
-    (import_id ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_trips_internal_id
 
@@ -69,7 +69,7 @@ CREATE INDEX IF NOT EXISTS ix_trips_internal_id
 
 CREATE INDEX IF NOT EXISTS ix_trips_route_id
     ON public.trips USING btree
-    (route_id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (route_id ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_trips_service_id
 
@@ -77,7 +77,7 @@ CREATE INDEX IF NOT EXISTS ix_trips_route_id
 
 CREATE INDEX IF NOT EXISTS ix_trips_service_id
     ON public.trips USING btree
-    (service_id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (service_id ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_trips_service_id_data_origin
 
@@ -85,7 +85,7 @@ CREATE INDEX IF NOT EXISTS ix_trips_service_id
 
 CREATE INDEX IF NOT EXISTS ix_trips_service_id_data_origin
     ON public.trips USING btree
-    (service_id COLLATE pg_catalog."default" ASC NULLS LAST, data_origin COLLATE pg_catalog."default" ASC NULLS LAST)
+    (service_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_trips_shape_id
 
@@ -93,5 +93,5 @@ CREATE INDEX IF NOT EXISTS ix_trips_service_id_data_origin
 
 CREATE INDEX IF NOT EXISTS ix_trips_shape_id
     ON public.trips USING btree
-    (shape_id COLLATE pg_catalog."default" ASC NULLS LAST)
+    (shape_id ASC NULLS LAST)
     TABLESPACE pg_default;
