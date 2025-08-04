@@ -45,17 +45,23 @@ target_date_range AS (
 )
 SELECT
     t.internal_id::text,
-    (d.start_of_day + st.arrival_time) AT TIME ZONE 'UTC',
-    (d.start_of_day + st.departure_time) AT TIME ZONE 'UTC',
-    (d.start_of_day + st.arrival_time) AT TIME ZONE 'UTC',
-    (d.start_of_day + st.departure_time) AT TIME ZONE 'UTC',
+    (d.start_of_day + st.arrival_time),
+    (d.start_of_day + st.departure_time),
+    (d.start_of_day + st.arrival_time),
+    (d.start_of_day + st.departure_time),
     tust.arrival_time,
     tust.departure_time,
     tust.schedule_relationship,
     st.stop_headsign,
     st.data_origin,
-    t.headsign,
-    t.short_name,
+-- this is awful dont do this in prod kids
+    COALESCE(t.headsign, 
+   concat((SELECT stops.name FROM public.stop_times2
+        inner join stops on stops.id = stop_times2.stop_id and stops.data_origin = stop_times2.data_origin
+        where trip_id = t.id and  stops.data_origin = t.data_origin
+        ORDER BY stop_sequence desc
+        limit 1), ' (?)')),
+            t.short_name,
     s.platform_code,
     s.platform_code,
     t.service_id,

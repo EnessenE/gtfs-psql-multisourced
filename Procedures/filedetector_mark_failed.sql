@@ -8,6 +8,8 @@ BEGIN
     UPDATE supplier_configurations
     SET 
        last_check_failure = now(),
+       last_check = now(),
+       last_checked = now(),
        state = __state
     WHERE 
         lower(name) = lower(__dataorigin);
