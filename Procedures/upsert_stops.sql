@@ -17,8 +17,8 @@ BEGIN
             _stop.latitude, 
             _stop.longitude, 
             ST_SetSRID(ST_MakePoint( 
-                ROUND(CAST(_stop.longitude AS NUMERIC), 6)::DOUBLE PRECISION, 
-                ROUND(CAST(_stop.latitude AS NUMERIC), 6)::DOUBLE PRECISION), 4326) AS geo_location, 
+                _stop.longitude,
+                _stop.latitude), 4326) AS geo_location, 
             _stop.zone, 
             _stop.url, 
             _stop.location_type_data AS location_type, 
