@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS public.supplier_configurations
     queued_import_id uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     header_key text NULL,
     header_value text NULL,
+    delay_import_by time without time zone NOT NULL DEFAULT '00:30:00'::time without time zone,
     CONSTRAINT pk_supplier_configurations PRIMARY KEY (name)
 )
 

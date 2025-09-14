@@ -20,6 +20,7 @@ RETURNS TABLE (
     last_import_success timestamp with time zone,
     last_import_failure timestamp with time zone,
     last_duration time,
+    delay_import_by time,
     queued_import_id uuid
 )
 LANGUAGE sql
@@ -43,6 +44,7 @@ AS $$
         last_import_success,
         last_import_failure,
         last_duration,
+        delay_import_by,
         queued_import_id
     FROM supplier_configurations
     $$;
