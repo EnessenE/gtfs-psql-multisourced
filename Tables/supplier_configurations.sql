@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS public.supplier_configurations
     last_import_failure timestamp with time zone NULL,
     last_duration time without time zone NOT NULL DEFAULT '00:00:00'::time without time zone,
     queued_import_id uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+    header text NULL,
+    header_secret text NULL,
     CONSTRAINT pk_supplier_configurations PRIMARY KEY (name)
 )
 
