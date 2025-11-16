@@ -132,6 +132,7 @@ WHERE
         SELECT related_stop FROM related_stops WHERE primary_stop = target_stop_id
     )
     AND s.stop_type = target_stop_type
+    AND st.departure_time IS NOT NULL
     AND (
         make_timestamp(
             EXTRACT(YEAR FROM dc.service_date)::int,
@@ -140,8 +141,9 @@ WHERE
             EXTRACT(HOUR FROM st.departure_time)::int,
             EXTRACT(MINUTE FROM st.departure_time)::int,
             EXTRACT(SECOND FROM st.departure_time)
-        ) AT TIME ZONE a.timezone
-    ) AT TIME ZONE 'UTC' >= from_time
+        ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
+    ) AT TIME ZONE 'UTC' >= now()
+
     AND EXISTS (
         SELECT 1 FROM stop_times2 st2
         WHERE st2.data_origin = st.data_origin AND st2.trip_id = st.trip_id AND st2.stop_sequence > st.stop_sequence

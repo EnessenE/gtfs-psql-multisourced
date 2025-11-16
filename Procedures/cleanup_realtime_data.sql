@@ -19,7 +19,7 @@ BEGIN
     DELETE FROM trip_updates_stop_times
     WHERE last_updated < now () - INTERVAL '20 minutes';
 
-    DELETE FROM alerts
+    DELETE FROM alert_active_periods
     WHERE last_updated < now () - INTERVAL '20 minutes';
 END;
 $BODY$;

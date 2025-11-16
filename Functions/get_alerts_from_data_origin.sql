@@ -43,7 +43,8 @@ BEGIN
     FROM
         public.alerts
     WHERE
-        alerts.data_origin = p_data_origin;
+        alerts.data_origin = p_data_origin
+    limit 100;
 END;
 $$;
 
