@@ -39,7 +39,6 @@ BEGIN
         JOIN routes r ON t.route_id = r.id AND t.data_origin = r.data_origin
         WHERE st.stop_id = p_target_stop_id
         AND st.data_origin = p_supplier_data_origin
-        LIMIT 1), 1000)
     where data_origin = p_supplier_data_origin and id = p_target_stop_id;
 
     RAISE NOTICE 'Route type detection for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;

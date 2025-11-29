@@ -24,7 +24,6 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target uuid, target_stop_typ
 	INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
 	WHERE
 	(ST_DWithin(stops.geo_location, (select geo_location from stop_data limit 1), 800, FALSE))
+	AND stop_type IS NOT NULL
 	AND NOT primary_stop = target
 $BODY$;
-
-ALTER FUNCTION public.get_related_stops(uuid, int) OWNER TO dennis;

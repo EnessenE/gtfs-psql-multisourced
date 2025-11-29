@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS public.stops
     wheelchair_boarding text,
     level_id text,
     platform_code text,
-    stop_type integer NOT NULL,
+    stop_type integer NULL,
     internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
