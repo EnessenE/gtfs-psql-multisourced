@@ -1,10 +1,11 @@
--- Ensure necessary extensions are available in your database:
--- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
--- CREATE EXTENSION IF NOT EXISTS pg_trgm;
--- CREATE EXTENSION IF NOT EXISTS postgis;
+-- PROCEDURE: public.merge_stop(text, text)
 
-CREATE OR REPLACE PROCEDURE public.merge_stop(IN p_target_stop_id text, IN p_supplier_data_origin text)
-LANGUAGE plpgsql
+-- DROP PROCEDURE IF EXISTS public.merge_stop(text, text);
+
+CREATE OR REPLACE PROCEDURE public.merge_stop(
+	IN p_target_stop_id text,
+	IN p_supplier_data_origin text)
+LANGUAGE 'plpgsql'
 AS $BODY$
 DECLARE
     -- Target stop details
@@ -39,6 +40,7 @@ BEGIN
         JOIN routes r ON t.route_id = r.id AND t.data_origin = r.data_origin
         WHERE st.stop_id = p_target_stop_id
         AND st.data_origin = p_supplier_data_origin
+        LIMIT 1), NULL)
     where data_origin = p_supplier_data_origin and id = p_target_stop_id;
 
     RAISE NOTICE 'Route type detection for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;
@@ -119,7 +121,9 @@ BEGIN
 
     RAISE NOTICE 'Merge process for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;
 
-
     -- The temporary table is automatically dropped here because of ON COMMIT DROP.
 END;
 $BODY$;
+ALTER PROCEDURE public.merge_stop(text, text)
+    OWNER TO postgres;
+
