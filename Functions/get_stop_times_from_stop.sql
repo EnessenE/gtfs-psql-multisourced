@@ -50,7 +50,7 @@ SELECT
             EXTRACT(HOUR FROM st.arrival_time)::int,
             EXTRACT(MINUTE FROM st.arrival_time)::int,
             EXTRACT(SECOND FROM st.arrival_time)
-        ) AT TIME ZONE a.timezone
+        ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
     ) AT TIME ZONE 'UTC' AS arrival_time,
     
     (
@@ -61,7 +61,7 @@ SELECT
             EXTRACT(HOUR FROM st.departure_time)::int,
             EXTRACT(MINUTE FROM st.departure_time)::int,
             EXTRACT(SECOND FROM st.departure_time)
-        ) AT TIME ZONE a.timezone
+        ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
     ) AT TIME ZONE 'UTC' AS departure_time,
     
     -- Return same planned times
@@ -73,7 +73,7 @@ SELECT
             EXTRACT(HOUR FROM st.arrival_time)::int,
             EXTRACT(MINUTE FROM st.arrival_time)::int,
             EXTRACT(SECOND FROM st.arrival_time)
-        ) AT TIME ZONE a.timezone
+        ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
     ) AT TIME ZONE 'UTC' AS planned_arrival_time,
     
     (
@@ -84,7 +84,7 @@ SELECT
             EXTRACT(HOUR FROM st.departure_time)::int,
             EXTRACT(MINUTE FROM st.departure_time)::int,
             EXTRACT(SECOND FROM st.departure_time)
-        ) AT TIME ZONE a.timezone
+        ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
     ) AT TIME ZONE 'UTC' AS planned_departure_time,
 
     tust.arrival_time,
@@ -180,7 +180,7 @@ ORDER BY
             EXTRACT(HOUR FROM st.arrival_time)::int,
             EXTRACT(MINUTE FROM st.arrival_time)::int,
             EXTRACT(SECOND FROM st.arrival_time)
-        ) AT TIME ZONE a.timezone
+        ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
     ) AT TIME ZONE 'UTC'
 LIMIT 100;
 $$;
