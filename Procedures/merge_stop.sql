@@ -18,19 +18,22 @@ DECLARE
 
     -- Grouping and thresholds
     v_chosen_guid           uuid;
-    v_distance_strict       float;
-    v_distance_loose        float;
+    v_distance_strict       float := 100;
+    v_distance_loose        float := 500;
     v_name_similarity_threshold float := 0.2;
 
 BEGIN
-    -- Use a temporary table to hold all stops that should be grouped together.
-    -- This solves the CTE scope issue, as the temp table is visible throughout the procedure.
-    -- ON COMMIT DROP ensures it is cleaned up automatically when the transaction completes.
-    CREATE TEMP TABLE temp_stops_to_group (
-        related_stop uuid,
-        related_data_origin character varying(100),
-        PRIMARY KEY (related_stop, related_data_origin)
-    ) ON COMMIT DROP;
+
+
+
+
+
+    SELECT
+        stops.internal_id, geography(stops.geo_location), stops.name, stops.parent_station, stops.stop_type, stops.data_origin
+    INTO
+        v_target_internal_id, v_target_geo, v_target_name, v_target_parent_station, v_target_stop_type, v_target_data_origin
+    FROM public.stops
+    WHERE stops.id = p_target_stop_id AND stops.data_origin = p_supplier_data_origin;
 
     update stops
     set stop_type = COALESCE((
@@ -45,34 +48,40 @@ BEGIN
 
     RAISE NOTICE 'Route type detection for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;
 
-    -- 1. Retrieve the target stop's information
-    SELECT
-        s.internal_id, geography(s.geo_location), s.name, s.parent_station, s.stop_type, s.data_origin
-    INTO
-        v_target_internal_id, v_target_geo, v_target_name, v_target_parent_station, v_target_stop_type, v_target_data_origin
-    FROM public.stops s
-    WHERE s.id = p_target_stop_id AND s.data_origin = p_supplier_data_origin;
 
-    IF NOT FOUND THEN
-        RAISE NOTICE 'Target stop (id: %, data_origin: %) not found. Skipping.', p_target_stop_id, p_supplier_data_origin;
-        RETURN;
-    END IF;
+
 
     -- 2. Check if the target stop is already part of a group.
     IF EXISTS (
          SELECT 1 FROM public.related_stops rs
-         WHERE rs.related_stop = v_target_internal_id AND rs.related_data_origin = v_target_data_origin
+         WHERE rs.related_stop = v_target_internal_id
     ) THEN
          RAISE NOTICE 'Target stop (internal_id: %, data_origin: %) is already in a group. Skipping.', v_target_internal_id, v_target_data_origin;
          RETURN;
     END IF;
 
-    -- 3. Determine distance thresholds
-    CASE v_target_stop_type
-        WHEN 0 THEN v_distance_strict := 50.0;  v_distance_loose  := 200.0;
-        WHEN 1 THEN v_distance_strict := 75.0;  v_distance_loose  := 300.0;
-        ELSE        v_distance_strict := 75.0;  v_distance_loose  := 300.0;
-    END CASE;
+
+    SELECT
+        stops.internal_id, geography(stops.geo_location), stops.name, stops.parent_station, stops.stop_type, stops.data_origin
+    INTO
+        searchable_stops_internal_id, searchable_stops_geo, searchable_stops_name, searchable_stops_parent_station, searchable_stops_stop_type, searchable_stops_data_origin
+    FROM public.stops
+    WHERE stops.internal_id != v_target_internal_id
+    AND (ST_DWithin(geography(stops.geo_location), v_target_geo, v_distance_loose)
+    AND (
+        -- Condition 1: GTFS hierarchy
+        (stops.data_origin = v_target_data_origin AND (
+            (v_target_parent_station IS NOT NULL AND v_target_parent_station <> '' AND stops.parent_station = v_target_parent_station) OR
+            (v_target_parent_station IS NOT NULL AND v_target_parent_station <> '' AND stops.id = v_target_parent_station) OR
+            (stops.parent_station IS NOT NULL AND stops.parent_station <> '' AND stops.parent_station = p_target_stop_id)
+        )) OR
+        -- Condition 2: Name and position
+        (stops.stop_type = v_target_stop_type AND (
+            ST_DWithin(geography(stops.geo_location), v_target_geo, v_distance_strict) OR
+             AND SIMILARITY(stops.name, v_target_name) >= v_name_similarity_threshold)
+        ))
+    );
+
 
     -- 4. Find all potential candidates and insert them into the temporary table.
     INSERT INTO temp_stops_to_group(related_stop, related_data_origin)
