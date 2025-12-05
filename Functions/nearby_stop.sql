@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION public.nearby_stops(x double precision, y double prec
             public.related_stops
             INNER JOIN stops ON related_stops.related_stop = stops.internal_id
         WHERE
-            stop_type != 1000
+            stop_type is not null
             AND ST_DWithin(stops.geo_location, ST_MakePoint(x, y), 1000, FALSE)
         GROUP BY
             primary_stop,
@@ -33,14 +33,14 @@ CREATE OR REPLACE FUNCTION public.nearby_stops(x double precision, y double prec
         stops
         INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
     WHERE
-        stop_type != 1000
-        AND related_stops.primary_stop IN(
+        stop_type is not null
+        AND related_stops.primary_stop IN (
             SELECT
                 primary_stop
             FROM
                 found_primaries
     WHERE
-        stop_type != 1000)
+        stop_type is not null)
     GROUP BY
         stops.name,
         stops.stop_type,

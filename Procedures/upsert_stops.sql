@@ -34,15 +34,14 @@ BEGIN
         FROM UNNEST(_stops) AS _stop
     ) AS source
     ON target.id = source.id AND target.data_origin = source.data_origin
-    WHEN MATCHED THEN
+WHEN MATCHED THEN
         UPDATE SET
-            -- Only update fields that need to change
             code = source.code,
             name = source.name,
             description = source.description,
             latitude = source.latitude,
             longitude = source.longitude,
-            geo_location = COALESCE(target.geo_location, source.geo_location), -- Do not overwrite geo_location if already set
+            geo_location = source.geo_location, 
             zone = source.zone,
             url = source.url,
             location_type = source.location_type,
