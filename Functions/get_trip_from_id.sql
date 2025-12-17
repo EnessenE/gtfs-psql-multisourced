@@ -19,7 +19,7 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
         occupancy_percentage integer,
         measurement_time timestamp with time zone,
         enroute_to text,
-		target_stop_id uuid,
+		target_stop_id text,
 		target_stop text,
 		route_short_name text,
 		route_long_name text
@@ -44,7 +44,7 @@ CREATE OR REPLACE FUNCTION public.get_trip_from_id(target uuid)
 		position_entities.occupancy_percentage,
 		position_entities.measurement_time,
  	    (select primary_stop from related_stops inner join stops on stops.internal_id = related_stops.related_stop where stops.id = position_entities.stop_id and stops.data_origin = trips.data_origin limit 1),		
-		stops.internal_id,
+		stops.internal_id::text,
 		stops.name,
 		routes.short_name,
 		routes.long_name

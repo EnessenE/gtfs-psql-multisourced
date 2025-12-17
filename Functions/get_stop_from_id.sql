@@ -1,4 +1,3 @@
--- FUNCTION: public.get_trip_from_id(text)
 CREATE OR REPLACE FUNCTION public.get_stop_from_id(target_id text, target_stop_type int)
     RETURNS TABLE(
         id text,
