@@ -1,20 +1,19 @@
-drop type stop_times_type cascade;
+DROP TYPE IF EXISTS public.stop_times_type CASCADE;
 
 CREATE TYPE public.stop_times_type AS (
-    data_origin TEXT,
-    trip_id TEXT,
-    stop_id TEXT,
-    stop_sequence_data double precision,
-    arrival_time_data TIME,
-    departure_time_data TIME,
-    stop_headsign TEXT,
-    pickup_type_data INT,
-    drop_off_type_data INT,
-    shape_dist_travelled DOUBLE PRECISION,
-    days_since_start_arrival int,
-    days_since_start_departure int,
-    timepoint_type_data INT,
-    internal_id uuid,
-    last_updated timestamp with time zone,
-    import_id uuid
+    data_origin                  text,
+    trip_id                      text,
+    stop_id                      text,
+    stop_sequence_data           double precision,
+    arrival_time_data            time without time zone,
+    departure_time_data          time without time zone,
+    days_since_start_arrival     integer,
+    days_since_start_departure   integer,
+    stop_headsign                text,
+    pickup_type_data             integer,
+    drop_off_type_data           integer,
+    shape_dist_travelled         double precision,
+    timepoint_type_data          integer,
+    last_updated                 timestamptz,
+    import_id                    uuid
 );

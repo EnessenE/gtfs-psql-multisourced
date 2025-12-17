@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
-    target_stop_id uuid,
+    target_stop_id text,
     target_stop_type integer,
     from_time timestamp with time zone
 )
@@ -97,9 +97,9 @@ SELECT
         t.headsign,
         concat(
             (SELECT stops.name
-             FROM stop_times2
-             JOIN stops ON stops.id = stop_times2.stop_id AND stops.data_origin = stop_times2.data_origin
-             WHERE stop_times2.trip_id = t.id AND stop_times2.data_origin = t.data_origin
+             FROM stop_times
+             JOIN stops ON stops.id = stop_times.stop_id AND stops.data_origin = stop_times.data_origin
+             WHERE stop_times.trip_id = t.id AND stop_times.data_origin = t.data_origin
              ORDER BY stop_sequence DESC
              LIMIT 1),
             ' (?)')
@@ -120,7 +120,7 @@ SELECT
     (tust.trip_id IS NOT NULL OR pe.trip_id IS NOT NULL)
 FROM
     stops s
-    INNER JOIN stop_times2 st ON s.id = st.stop_id AND s.data_origin = st.data_origin
+    INNER JOIN stop_times st ON s.id = st.stop_id AND s.data_origin = st.data_origin
     INNER JOIN trips t ON st.trip_id = t.id AND st.data_origin = t.data_origin
     INNER JOIN day_context dc ON TRUE
     INNER JOIN routes r ON t.route_id = r.id AND t.data_origin = r.data_origin
@@ -129,7 +129,7 @@ FROM
     LEFT JOIN position_entities pe ON t.id = pe.trip_id AND pe.data_origin = t.data_origin
 WHERE
     s.internal_id IN (
-        SELECT related_stop FROM related_stops WHERE primary_stop = target_stop_id
+        SELECT related_stop FROM related_stops WHERE primary_stop = target_stop_id::uuid
     )
     AND s.stop_type = target_stop_type
     AND st.departure_time IS NOT NULL
@@ -142,10 +142,10 @@ WHERE
             EXTRACT(MINUTE FROM st.departure_time)::int,
             EXTRACT(SECOND FROM st.departure_time)
         ) AT TIME ZONE COALESCE(a.timezone, 'UTC')
-    ) AT TIME ZONE 'UTC' >= now()
+    ) AT TIME ZONE 'UTC' >= timezone('utc', now())
 
     AND EXISTS (
-        SELECT 1 FROM stop_times2 st2
+        SELECT 1 FROM stop_times st2
         WHERE st2.data_origin = st.data_origin AND st2.trip_id = st.trip_id AND st2.stop_sequence > st.stop_sequence
         LIMIT 1
     )

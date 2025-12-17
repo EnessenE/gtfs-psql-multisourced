@@ -28,7 +28,6 @@ BEGIN
             _stop.level_id, 
             _stop.platform_code, 
             _stop.stop_type_data AS stop_type, 
-            _stop.internal_id, 
             _stop.last_updated, 
             _stop.import_id
         FROM UNNEST(_stops) AS _stop
@@ -51,12 +50,11 @@ WHEN MATCHED THEN
             level_id = source.level_id,
             platform_code = source.platform_code,
             stop_type = source.stop_type,
-            internal_id = source.internal_id,
             last_updated = source.last_updated,
             import_id = source.import_id
     WHEN NOT MATCHED THEN
         INSERT (
-            data_origin, id, code, name, description, latitude, longitude, geo_location, zone, url, location_type, parent_station, timezone, wheelchair_boarding, level_id, platform_code, stop_type, internal_id, last_updated, import_id
+            data_origin, id, code, name, description, latitude, longitude, geo_location, zone, url, location_type, parent_station, timezone, wheelchair_boarding, level_id, platform_code, stop_type, last_updated, import_id
         )
         VALUES (
             source.data_origin, 
@@ -76,7 +74,6 @@ WHEN MATCHED THEN
             source.level_id, 
             source.platform_code, 
             source.stop_type, 
-            source.internal_id, 
             source.last_updated, 
             source.import_id
         );

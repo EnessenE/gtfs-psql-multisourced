@@ -1,5 +1,5 @@
 -- FUNCTION: public.get_trip_from_id(text)
-CREATE OR REPLACE FUNCTION public.get_stop_from_id(target uuid, target_stop_type int)
+CREATE OR REPLACE FUNCTION public.get_stop_from_id(target_id text, target_stop_type int)
     RETURNS TABLE(
         id text,
         code text,
@@ -35,10 +35,8 @@ AS $BODY$
         related_stops
         INNER JOIN stops ON related_stops.related_stop = stops.internal_id
             AND related_stops.related_data_origin = stops.data_origin
-    WHERE(primary_stop = target
+    WHERE(primary_stop = target_id::uuid
         AND stop_type = target_stop_type)
 LIMIT 1
 $BODY$;
-
-ALTER FUNCTION public.get_stop_from_id(uuid, int) OWNER TO dennis;
 

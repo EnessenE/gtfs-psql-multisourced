@@ -52,7 +52,7 @@ SELECT
     stops.stop_type
 
 FROM
-    stop_times2 AS stop_times
+    stop_times AS stop_times
     JOIN stops ON stop_times.stop_id = stops.id AND stop_times.data_origin = stops.data_origin
     JOIN trips ON trips.id = stop_times.trip_id AND trips.data_origin = stop_times.data_origin
     LEFT JOIN calendar_dates ON trips.service_id = calendar_dates.service_id
