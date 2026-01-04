@@ -4,7 +4,6 @@ drop type position_entity_type;
 
 CREATE TYPE public.position_entity_type AS (
     data_origin text,
-    internal_id uuid,
     last_updated timestamp with time zone,
     id text,
     trip_id text,
@@ -30,13 +29,13 @@ BEGIN
     FOREACH position IN ARRAY positions
     LOOP
         INSERT INTO public.position_entities (id, 
-            data_origin, internal_id, last_updated, 
+            data_origin, last_updated, 
             trip_id, latitude, longitude, geo_location, 
             stop_id, current_status, measurement_time, 
             congestion_level, occupancy_status, occupancy_percentage
         )
         VALUES (position.id,
-            position.data_origin, position.internal_id, position.last_updated, 
+            position.data_origin, position.last_updated, 
             position.trip_id, position.latitude, position.longitude, 
             ST_SetSRID(ST_MakePoint(position.longitude, position.latitude), 4326), 
             position.stop_id, position.current_status, position.measurement_time, 

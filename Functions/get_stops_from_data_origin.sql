@@ -46,7 +46,6 @@ CREATE OR REPLACE FUNCTION public.get_stops_from_data_origin(target_data_origin 
         stops.name DESC
 $BODY$;
 
-ALTER FUNCTION public.get_stops_from_data_origin(text) OWNER TO dennis;
 
 SELECT
     *

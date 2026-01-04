@@ -3,7 +3,7 @@ drop type trip_update_stop_time_type;
 
 CREATE TYPE trip_update_stop_time_type AS (
     data_origin text,
-    internal_id uuid,
+    id text,
     last_updated timestamp WITH time zone,
     stop_sequence int,
     stop_id text,
@@ -30,7 +30,7 @@ BEGIN
     FOREACH update_item IN ARRAY updates LOOP
         INSERT INTO trip_updates_stop_times (
             data_origin,
-            internal_id,
+            id,
             last_updated,
             stop_sequence,
             trip_id,
@@ -45,7 +45,7 @@ BEGIN
         )
         VALUES (
             update_item.data_origin,
-            update_item.internal_id,
+            update_item.id,
             update_item.last_updated,
             update_item.stop_sequence,
             update_item.trip_id,
@@ -58,7 +58,7 @@ BEGIN
             update_item.departure_uncertainty,
             update_item.schedule_relationship
         )
-        ON CONFLICT (data_origin, stop_id, trip_id) DO UPDATE
+        ON CONFLICT (id, data_origin) DO UPDATE
         SET
             data_origin = EXCLUDED.data_origin,
             last_updated = EXCLUDED.last_updated,

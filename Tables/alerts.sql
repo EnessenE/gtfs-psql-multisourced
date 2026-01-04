@@ -1,11 +1,10 @@
 
 CREATE TABLE IF NOT EXISTS public.alerts
 (
+    id text NOT NULL,
     data_origin text  NOT NULL,
-    internal_id uuid NOT NULL,
     created timestamp with time zone NOT NULL default (timezone('utc', now())),
     last_updated timestamp with time zone NOT NULL,
-    id text,
     is_deleted boolean default 'false',
 
     active_periods uuid NULL,
@@ -17,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.alerts
     tts_header_text text NULL,
     tts_description_text text NULL,
     severity_level text NULL,
-    CONSTRAINT pk_alerts PRIMARY KEY (internal_id)
+    CONSTRAINT pk_alerts PRIMARY KEY (id, data_origin)
 );
 
 -- DROP INDEX IF EXISTS public.ix_alerts_id;

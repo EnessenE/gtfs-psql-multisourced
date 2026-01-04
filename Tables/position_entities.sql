@@ -1,14 +1,13 @@
 -- Table: public.position_entities
 
--- DROP TABLE IF EXISTS public.position_entities;
+DROP TABLE IF EXISTS public.position_entities;
 
 CREATE TABLE IF NOT EXISTS public.position_entities
 (
     data_origin character varying(100) NOT NULL,
-    internal_id uuid NOT NULL,
-    last_updated timestamp with time zone NOT NULL,
 
     id text NOT NULL,
+    last_updated timestamp with time zone NOT NULL,
     trip_id text,
 
     latitude double precision,

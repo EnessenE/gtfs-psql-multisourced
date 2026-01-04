@@ -2,7 +2,7 @@ drop table if exists trip_updates_stop_times;
 
 CREATE TABLE trip_updates_stop_times (
     data_origin text,
-    internal_id uuid,
+    id text not null,
     last_updated timestamp WITH time zone,
     stop_sequence int,
     trip_id text,
@@ -14,7 +14,7 @@ CREATE TABLE trip_updates_stop_times (
     departure_time timestamp with time zone,
     departure_uncertainty int,
     schedule_relationship text,
-    CONSTRAINT trip_updates_stop_times_pkey PRIMARY KEY (data_origin, trip_id, stop_id)
+    CONSTRAINT trip_updates_stop_times_pkey PRIMARY KEY (id, data_origin)
 );
 
 
