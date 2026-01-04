@@ -4,6 +4,7 @@ drop function get_all_feeds();
 CREATE OR REPLACE FUNCTION public.get_all_feeds()
     RETURNS TABLE(
         name text,
+        credits text,
         "interval" interval,
         download_pending boolean,
         last_checked timestamp with time zone,
@@ -24,6 +25,7 @@ CREATE OR REPLACE FUNCTION public.get_all_feeds()
     AS $BODY$
     SELECT
         supplier_configurations.name,
+        supplier_configurations.credits,
         supplier_configurations.polling_rate,
         supplier_configurations.download_pending,
         supplier_configurations.last_checked,
@@ -35,7 +37,6 @@ CREATE OR REPLACE FUNCTION public.get_all_feeds()
 		(select count(*) from stops where stops.data_origin = supplier_configurations.name) stops,
 		(select count(*) from routes where routes.data_origin = supplier_configurations.name) routes,
 		(select count(*) from agencies where agencies.data_origin = supplier_configurations.name) agencies,
-		-- (select count(*) from stop_times where stop_times.data_origin = supplier_configurations.name) stop_times,
 		(select count(*) from trips where trips.data_origin = supplier_configurations.name) trips,
 		(select count(*) from alerts where alerts.data_origin = supplier_configurations.name) alerts,
 		(select count(*) from position_entities where position_entities.data_origin = supplier_configurations.name) vehicles,

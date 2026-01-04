@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS public.supplier_configurations
 (
     name text NOT NULL,
     retrieval_type integer NOT NULL,
+    credits text NOT NULL,
     data_type integer NOT NULL,
     polling_rate interval NOT NULL,
     url text NOT NULL,
