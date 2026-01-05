@@ -14,7 +14,15 @@ CREATE TABLE trip_updates_stop_times (
     departure_time timestamp with time zone,
     departure_uncertainty int,
     schedule_relationship text,
-    CONSTRAINT trip_updates_stop_times_pkey PRIMARY KEY (id, data_origin)
+
+    CONSTRAINT pk_trip_updates_stop_times_entities PRIMARY KEY (id, data_origin),
+    
+    CONSTRAINT uq_trip_updates_stop_times_entities_logical UNIQUE NULLS NOT DISTINCT (
+        data_origin, 
+        id, 
+        trip_id, 
+        stop_id
+    )
 );
 
 

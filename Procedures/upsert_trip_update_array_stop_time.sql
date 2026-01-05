@@ -58,7 +58,7 @@ BEGIN
             update_item.departure_uncertainty,
             update_item.schedule_relationship
         )
-        ON CONFLICT (id, data_origin) DO UPDATE
+        ON CONFLICT (id, data_origin, trip_id, stop_id) DO UPDATE
         SET
             data_origin = EXCLUDED.data_origin,
             last_updated = EXCLUDED.last_updated,
