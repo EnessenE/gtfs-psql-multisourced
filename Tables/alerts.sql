@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS public.alerts
     created timestamp with time zone NOT NULL default (timezone('utc', now())),
     last_updated timestamp with time zone NOT NULL,
     is_deleted boolean default 'false',
-
-    active_periods uuid NULL,
     cause text NULL,
     effect text NULL,
     url text NULL,

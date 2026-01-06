@@ -32,7 +32,7 @@ BEGIN
         alerts.last_updated,
         alerts.id,
         alerts.is_deleted,
-        alerts.active_periods::text,
+        'ye',
         alerts.cause,
         alerts.effect,
         alerts.url,
@@ -46,10 +46,12 @@ BEGIN
     INNER JOIN public.stops ON stops.internal_id = related_stops.related_stop
     INNER JOIN public.alert_entities ON stops.id = alert_entities.stop_id and stops.data_origin = alert_entities.data_origin
     INNER JOIN public.alerts ON alert_entities.alert_id = alerts.id AND alert_entities.data_origin = alerts.data_origin
+    INNER JOIN public.alert_active_periods ON alert_active_periods.id = alerts.id AND alert_active_periods.data_origin = alerts.data_origin
 	WHERE
         related_stops.primary_stop = target_stop_id
     AND
         stops.stop_type = target_stop_type
+    AND now() BETWEEN alert_active_periods.start_time AND alert_active_periods.end_time
     ORDER BY 
         alerts.id, alerts.data_origin, alerts.last_updated DESC;
 END;
