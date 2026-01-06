@@ -1,40 +1,18 @@
+-- FUNCTION: public.get_stop_times_from_stop(text, integer, timestamp with time zone)
+
+-- DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, integer, timestamp with time zone);
+
 CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
-    target_stop_id text,
-    target_stop_type integer,
-    from_time timestamp with time zone
-)
-RETURNS TABLE(
-    trip_id text,
-    arrival_time timestamp with time zone,
-    departure_time timestamp with time zone,
-    planned_arrival_time timestamp with time zone,
-    planned_departure_time timestamp with time zone,
-    actual_arrival_time timestamp with time zone,
-    actual_departure_time timestamp with time zone,
-    schedule_relationship text,
-    stop_headsign text,
-    data_origin text,
-    headsign text,
-    short_name text,
-    planned_platform text,
-    actual_platform text,
-    service_id text,
-    route_short_name text,
-    route_long_name text,
-    operator text,
-    route_url text,
-    route_type text,
-    route_desc text,
-    route_color text,
-    route_text_color text,
-    stop_type bigint,
-    real_time boolean
-)
-LANGUAGE sql
-STABLE
-PARALLEL SAFE
-ROWS 100
-AS $$
+	target_stop_id text,
+	target_stop_type integer,
+	from_time timestamp with time zone)
+    RETURNS TABLE(trip_id text, arrival_time timestamp with time zone, departure_time timestamp with time zone, planned_arrival_time timestamp with time zone, planned_departure_time timestamp with time zone, actual_arrival_time timestamp with time zone, actual_departure_time timestamp with time zone, schedule_relationship text, stop_headsign text, data_origin text, headsign text, short_name text, planned_platform text, actual_platform text, service_id text, route_short_name text, route_long_name text, operator text, route_url text, route_type text, route_desc text, route_color text, route_text_color text, stop_type bigint, real_time boolean, starts_from text, starts_before boolean, ends_at text) 
+    LANGUAGE 'sql'
+    COST 100
+    STABLE PARALLEL SAFE 
+    ROWS 100
+
+AS $BODY$
 WITH day_context AS (
   SELECT date_trunc('day', from_time) AS service_date
 )
@@ -91,41 +69,8 @@ SELECT
     trip_updates_stop_times.departure_time,
     trip_updates_stop_times.schedule_relationship,
 
-    -- Headsign logic with stop count for skipped stops
-    COALESCE(
-        CASE
-            WHEN (stop_times.pickup_type = 1 AND stop_times.drop_off_type = 1) OR lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN
-                COALESCE(
-                    (SELECT 'Will start from ' || s_next.name || ' (' || (st_next.stop_sequence - stop_times.stop_sequence)::text || ' stops)'
-                     FROM stop_times st_next
-                     JOIN stops s_next ON st_next.stop_id = s_next.id AND st_next.data_origin = s_next.data_origin
-                     LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id
-                                                                AND st_next.data_origin = tust_next.data_origin
-                                                                AND st_next.stop_id = tust_next.stop_id
-                     WHERE st_next.trip_id = stop_times.trip_id
-                       AND st_next.data_origin = stop_times.data_origin
-                       AND st_next.stop_sequence > stop_times.stop_sequence
-                       AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) != 'skipped')
-                       AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
-                     ORDER BY st_next.stop_sequence
-                     LIMIT 1),
-                    (SELECT 'Will end at ' || s_prev.name || ' (' || (stop_times.stop_sequence - st_prev.stop_sequence)::text || ' stops)'
-                     FROM stop_times st_prev
-                     JOIN stops s_prev ON st_prev.stop_id = s_prev.id AND st_prev.data_origin = s_prev.data_origin
-                     LEFT JOIN trip_updates_stop_times tust_prev ON st_prev.trip_id = tust_prev.trip_id
-                                                                AND st_prev.data_origin = tust_prev.data_origin
-                                                                AND st_prev.stop_id = tust_prev.stop_id
-                     WHERE st_prev.trip_id = stop_times.trip_id
-                       AND st_prev.data_origin = stop_times.data_origin
-                       AND st_prev.stop_sequence < stop_times.stop_sequence
-                       AND (lower(tust_prev.schedule_relationship) IS NULL OR lower(tust_prev.schedule_relationship) != 'skipped')
-                       AND (st_prev.pickup_type != 1 OR st_prev.drop_off_type != 1)
-                     ORDER BY st_prev.stop_sequence DESC
-                     LIMIT 1)
-                )
-        END,
-        stop_times.stop_headsign
-    ),
+    -- Reverted to simple stop_headsign
+    stop_times.stop_headsign,
     stop_times.data_origin,
     --dont do this in prod kids
     COALESCE(
@@ -152,7 +97,78 @@ SELECT
     routes.color,
     routes.text_color,
     stops.stop_type,
-    (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL)
+    (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL),
+
+    -- start_from: Populated only if the current stop is skipped, showing the next stop.
+    CASE
+        WHEN (stop_times.pickup_type = 1 AND stop_times.drop_off_type = 1) OR lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN
+            COALESCE(
+                (SELECT s_next.name
+                 FROM stop_times st_next
+                 JOIN stops s_next ON st_next.stop_id = s_next.id AND st_next.data_origin = s_next.data_origin
+                 LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
+                 WHERE st_next.trip_id = stop_times.trip_id AND st_next.data_origin = stop_times.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
+                   AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) != 'skipped') AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
+                 ORDER BY st_next.stop_sequence
+                 LIMIT 1),
+                (SELECT s_prev.name -- Fallback to last stop if no next stop exists
+                 FROM stop_times st_prev
+                 JOIN stops s_prev ON st_prev.stop_id = s_prev.id AND st_prev.data_origin = s_prev.data_origin
+                 WHERE st_prev.trip_id = stop_times.trip_id AND st_prev.data_origin = stop_times.data_origin AND st_prev.stop_sequence < stop_times.stop_sequence
+                 ORDER BY st_prev.stop_sequence DESC
+                 LIMIT 1)
+            )
+        ELSE NULL
+    END,
+
+    -- starts_before: Boolean. True if the trip terminated before this skipped stop. False if it will start again after.
+    CASE
+        WHEN (stop_times.pickup_type = 1 AND stop_times.drop_off_type = 1) OR lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN
+            ((SELECT st_next.stop_id
+              FROM stop_times st_next
+              LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
+              WHERE st_next.trip_id = stop_times.trip_id AND st_next.data_origin = stop_times.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
+                AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) != 'skipped') AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
+              LIMIT 1) IS NULL)
+        ELSE NULL
+    END,
+
+    -- ends_earlier: Name of the new final stop, but only if the trip is ending earlier than planned.
+    CASE
+        WHEN -- Condition: The actual last stop sequence is less than the planned last stop sequence
+            (
+                SELECT MAX(st_actual.stop_sequence)
+                FROM stop_times AS st_actual
+                LEFT JOIN trip_updates_stop_times AS tust_actual ON st_actual.trip_id = tust_actual.trip_id AND st_actual.data_origin = tust_actual.data_origin AND st_actual.stop_id = tust_actual.stop_id
+                WHERE st_actual.trip_id = trips.id AND st_actual.data_origin = trips.data_origin
+                  AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) != 'skipped')
+            )
+            <
+            (
+                SELECT MAX(st_planned.stop_sequence)
+                FROM stop_times AS st_planned
+                WHERE st_planned.trip_id = trips.id AND st_planned.data_origin = trips.data_origin
+            )
+        THEN -- Action: Get the name of the actual last stop
+            (
+                SELECT s_last.name
+                FROM stop_times AS st_last
+                JOIN stops AS s_last ON st_last.stop_id = s_last.id AND st_last.data_origin = s_last.data_origin
+                WHERE st_last.trip_id = trips.id AND st_last.data_origin = trips.data_origin
+                AND st_last.stop_sequence = (
+                    -- Re-calculating the actual last stop sequence to get the correct stop
+                    SELECT MAX(st_actual.stop_sequence)
+                    FROM stop_times AS st_actual
+                    LEFT JOIN trip_updates_stop_times AS tust_actual ON st_actual.trip_id = tust_actual.trip_id AND st_actual.data_origin = tust_actual.data_origin AND st_actual.stop_id = tust_actual.stop_id
+                    WHERE st_actual.trip_id = trips.id AND st_actual.data_origin = trips.data_origin
+                    AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) != 'skipped')
+                )
+                LIMIT 1
+            )
+        ELSE
+            NULL
+    END
+
 FROM
     stops
     INNER JOIN stop_times ON stops.id = stop_times.stop_id AND stops.data_origin = stop_times.data_origin
@@ -218,4 +234,8 @@ ORDER BY
         ) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')
     ) AT TIME ZONE 'UTC'
 LIMIT 100;
-$$;
+$BODY$;
+
+ALTER FUNCTION public.get_stop_times_from_stop(text, integer, timestamp with time zone)
+    OWNER TO postgres;
+
