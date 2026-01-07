@@ -1,12 +1,40 @@
 -- FUNCTION: public.get_stop_times_from_stop(text, integer, timestamp with time zone)
 
--- DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, integer, timestamp with time zone);
+DROP FUNCTION IF EXISTS public.get_stop_times_from_stop(text, integer, timestamp with time zone);
 
 CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
 	target_stop_id text,
 	target_stop_type integer,
 	from_time timestamp with time zone)
-    RETURNS TABLE(trip_id text, arrival_time timestamp with time zone, departure_time timestamp with time zone, planned_arrival_time timestamp with time zone, planned_departure_time timestamp with time zone, actual_arrival_time timestamp with time zone, actual_departure_time timestamp with time zone, schedule_relationship text, stop_headsign text, data_origin text, headsign text, short_name text, planned_platform text, actual_platform text, service_id text, route_short_name text, route_long_name text, operator text, route_url text, route_type text, route_desc text, route_color text, route_text_color text, stop_type bigint, real_time boolean, starts_from text, starts_before boolean, ends_at text) 
+    RETURNS TABLE(trip_id text, 
+    arrival_time timestamp with time zone, 
+    departure_time timestamp with time zone, 
+    planned_arrival_time timestamp with time zone, 
+    planned_departure_time timestamp with time zone, 
+    actual_arrival_time timestamp with time zone, 
+    actual_departure_time timestamp with time zone, 
+    trip_schedule_relationship text, 
+    stop_schedule_relationship text, 
+    stop_headsign text, 
+    data_origin text, 
+    headsign text, 
+    short_name text, 
+    planned_platform text, 
+    actual_platform text, 
+    service_id text, 
+    route_short_name text, 
+    route_long_name text, 
+    operator text, 
+    route_url text, 
+    route_type text, 
+    route_desc text, 
+    route_color text, 
+    route_text_color text, 
+    stop_type bigint, 
+    real_time boolean, 
+    starts_from text, 
+    starts_before boolean, 
+    ends_at text) 
     LANGUAGE 'sql'
     COST 100
     STABLE PARALLEL SAFE 
@@ -68,11 +96,12 @@ SELECT
     trip_updates_stop_times.arrival_time,
     trip_updates_stop_times.departure_time,
     trip_updates_stop_times.schedule_relationship,
-
-    -- Reverted to simple stop_headsign
+    -- Joining trip_updates in here murders performance, so we do a subquery instead
+    (select trip_updates.schedule_relationship from trip_updates where trip_updates.trip_id = trips.id and trip_updates.data_origin = trips.data_origin limit 1),
     stop_times.stop_headsign,
     stop_times.data_origin,
     --dont do this in prod kids
+    -- dont do ANYTHING IN HERE in prod kids
     COALESCE(
         trips.headsign,
         concat(

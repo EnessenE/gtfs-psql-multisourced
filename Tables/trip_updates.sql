@@ -2,6 +2,7 @@
 CREATE TABLE trip_updates(
     data_origin text,
     id text,
+    trip_id text,
     internal_id uuid,
     last_updated timestamp with time zone,
     delay int,
@@ -14,3 +15,5 @@ CREATE TABLE trip_updates(
     CONSTRAINT trip_updates_pkey PRIMARY KEY (data_origin, id)
 );
 
+
+CREATE INDEX IF NOT EXISTS ix_trip_updates_trip_id_data_origin  ON public.trip_updates USING btree (trip_id ASC NULLS LAST, data_origin);
