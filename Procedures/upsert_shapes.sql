@@ -10,10 +10,9 @@ AS $$
 BEGIN
     -- Perform a single bulk insert for all rows in the _shapes array
     INSERT INTO public.shapes (
-        internal_id, data_origin, id, sequence, latitude, longitude, geo_location, distance_travelled, last_updated, import_id
+        data_origin, id, sequence, latitude, longitude, geo_location, distance_travelled, last_updated, import_id
     )
     SELECT 
-        _shape.internal_id, 
         _shape.data_origin, 
         _shape.id, 
         _shape.sequence_data,  -- Use _sequence_data from the array
