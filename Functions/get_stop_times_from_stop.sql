@@ -128,40 +128,47 @@ SELECT
     stops.stop_type,
     (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL),
 
-    -- start_from: Populated only if the current stop is skipped, showing the next stop.
+    -- starts_from: Populated only if the current stop is skipped, showing the next stop.
+    -- This is now conditional on the trip not having terminated before the current stop.
     CASE
-        WHEN (stop_times.pickup_type = 1 AND stop_times.drop_off_type = 1) OR lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN
-            COALESCE(
-                (SELECT s_next.name
-                 FROM stop_times st_next
-                 JOIN stops s_next ON st_next.stop_id = s_next.id AND st_next.data_origin = s_next.data_origin
-                 LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
-                 WHERE st_next.trip_id = stop_times.trip_id AND st_next.data_origin = stop_times.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
-                   AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) != 'skipped') AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
-                 ORDER BY st_next.stop_sequence
-                 LIMIT 1),
-                (SELECT s_prev.name -- Fallback to last stop if no next stop exists
-                 FROM stop_times st_prev
-                 JOIN stops s_prev ON st_prev.stop_id = s_prev.id AND st_prev.data_origin = s_prev.data_origin
-                 WHERE st_prev.trip_id = stop_times.trip_id AND st_prev.data_origin = stop_times.data_origin AND st_prev.stop_sequence < stop_times.stop_sequence
-                 ORDER BY st_prev.stop_sequence DESC
-                 LIMIT 1)
-            )
-        ELSE NULL
+        -- Only proceed if the stop is marked as skipped...
+        WHEN lower(trip_updates_stop_times.schedule_relationship) = 'skipped'
+        -- ...AND the current stop's sequence is LESS THAN the actual last stop that will be served.
+        AND stop_times.stop_sequence < (
+            SELECT MAX(st_actual.stop_sequence)
+            FROM stop_times AS st_actual
+            LEFT JOIN trip_updates_stop_times AS tust_actual ON st_actual.trip_id = tust_actual.trip_id AND st_actual.data_origin = tust_actual.data_origin AND st_actual.stop_id = tust_actual.stop_id
+            WHERE st_actual.trip_id = trips.id AND st_actual.data_origin = trips.data_origin
+            AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) not in ('skipped', 'cancelled'))
+        )
+        THEN
+            -- If the conditions are met, find the next non-skipped/cancelled stop.
+            (SELECT s_next.name
+            FROM stop_times st_next
+            JOIN stops s_next ON st_next.stop_id = s_next.id AND st_next.data_origin = s_next.data_origin
+            LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
+            WHERE st_next.trip_id = stop_times.trip_id AND st_next.data_origin = stop_times.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
+            AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) not in ('skipped', 'cancelled')) AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
+            ORDER BY st_next.stop_sequence
+            LIMIT 1)
+        ELSE
+            -- If the stop is skipped but is after the new end of the line, it doesn't "start from" anywhere.
+            NULL
     END,
 
-    -- starts_before: Boolean. True if the trip terminated before this skipped stop. False if it will start again after.
+    -- starts_before: Boolean. True if the trip terminated before this skipped stop.
     CASE
-        WHEN (stop_times.pickup_type = 1 AND stop_times.drop_off_type = 1) OR lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN
+        WHEN lower(trip_updates_stop_times.schedule_relationship) in ('skipped') THEN
+            -- This is true if there is no valid next stop to resume service from.
             ((SELECT st_next.stop_id
-              FROM stop_times st_next
-              LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
-              WHERE st_next.trip_id = stop_times.trip_id AND st_next.data_origin = stop_times.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
-                AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) != 'skipped') AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
-              LIMIT 1) IS NULL)
-        ELSE NULL
+            FROM stop_times st_next
+            LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
+            WHERE st_next.trip_id = stop_times.trip_id AND st_next.data_origin = stop_times.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
+                AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) not in ('skipped', 'cancelled')) AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
+            LIMIT 1) IS NULL)
+        ELSE
+            NULL
     END,
-
     -- ends_earlier: Name of the new final stop, but only if the trip is ending earlier than planned.
     CASE
         WHEN -- Condition: The actual last stop sequence is less than the planned last stop sequence
@@ -170,7 +177,7 @@ SELECT
                 FROM stop_times AS st_actual
                 LEFT JOIN trip_updates_stop_times AS tust_actual ON st_actual.trip_id = tust_actual.trip_id AND st_actual.data_origin = tust_actual.data_origin AND st_actual.stop_id = tust_actual.stop_id
                 WHERE st_actual.trip_id = trips.id AND st_actual.data_origin = trips.data_origin
-                  AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) != 'skipped')
+                  AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) not in ('skipped', 'cancelled'))
             )
             <
             (
@@ -190,7 +197,7 @@ SELECT
                     FROM stop_times AS st_actual
                     LEFT JOIN trip_updates_stop_times AS tust_actual ON st_actual.trip_id = tust_actual.trip_id AND st_actual.data_origin = tust_actual.data_origin AND st_actual.stop_id = tust_actual.stop_id
                     WHERE st_actual.trip_id = trips.id AND st_actual.data_origin = trips.data_origin
-                    AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) != 'skipped')
+                    AND (lower(tust_actual.schedule_relationship) IS NULL OR lower(tust_actual.schedule_relationship) not in ('skipped', 'cancelled'))
                 )
                 LIMIT 1
             )
