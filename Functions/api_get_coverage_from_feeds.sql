@@ -15,13 +15,14 @@ AS $BODY$
             stop_type,
             ST_ClusterDBSCAN(
                 ST_Transform(geo_location, 3857),
-                eps := 50000,        -- 10 km
+                eps := coalesce(supplier_configurations.coverage_range, 50000),
                 minpoints := 1
             ) OVER (
                 PARTITION BY data_origin, stop_type
             ) AS cluster_id,
             ST_Transform(geo_location, 3857) AS geom_3857
         FROM stops
+        INNER JOIN supplier_configurations on stops.data_origin = supplier_configurations.name
         WHERE stop_type IS NOT NULL
     ),
     hulls AS (

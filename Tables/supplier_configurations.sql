@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.supplier_configurations
     header_key text NULL,
     header_value text NULL,
     delay_import_by time without time zone NOT NULL DEFAULT '00:30:00'::time without time zone,
+    coverage_range integer DEFAULT 10000,
     CONSTRAINT pk_supplier_configurations PRIMARY KEY (name)
 )
 
