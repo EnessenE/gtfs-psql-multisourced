@@ -6,12 +6,10 @@ CREATE OR REPLACE FUNCTION public.get_alerts_from_stop(
 )
 RETURNS TABLE (
     data_origin text,
-    internal_id text,
     created timestamp with time zone,
     last_updated timestamp with time zone,
     id text,
     is_deleted boolean,
-    active_periods text,
     cause text,
     effect text,
     url text,
@@ -19,7 +17,9 @@ RETURNS TABLE (
     description_text text,
     tts_header_text text,
     tts_description_text text,
-    severity_level text
+    severity_level text,
+    start_time timestamptz,
+    end_time timestamptz
 )
 LANGUAGE plpgsql
 AS $$
@@ -27,12 +27,10 @@ BEGIN
     RETURN QUERY
     SELECT DISTINCT ON (alerts.id, alerts.data_origin)
         alerts.data_origin,
-        alerts.id,
         alerts.created,
         alerts.last_updated,
         alerts.id,
         alerts.is_deleted,
-        'ye',
         alerts.cause,
         alerts.effect,
         alerts.url,
@@ -40,7 +38,9 @@ BEGIN
         alerts.description_text,
         alerts.tts_header_text,
         alerts.tts_description_text,
-        alerts.severity_level
+        alerts.severity_level,
+        alert_active_periods.start_time,
+        alert_active_periods.end_time
     FROM
         public.related_stops
     INNER JOIN public.stops ON stops.internal_id = related_stops.related_stop

@@ -79,10 +79,8 @@ BEGIN
                 (s.parent_station IS NOT NULL AND s.parent_station <> '' AND s.parent_station = p_target_stop_id)
             )) OR
             -- Condition 2: Name and position (with more restrictive logic)
-            (s.stop_type = v_target_stop_type AND
-                (ST_DWithin(geography(s.geo_location), v_target_geo, v_distance_strict) OR
-                 (ST_DWithin(geography(s.geo_location), v_target_geo, v_distance_loose) AND SIMILARITY(s.name, v_target_name) >= v_name_similarity_threshold)
-                )
+            (ST_DWithin(geography(s.geo_location), v_target_geo, v_distance_strict) OR
+                (ST_DWithin(geography(s.geo_location), v_target_geo, v_distance_loose) AND SIMILARITY(s.name, v_target_name) >= v_name_similarity_threshold)
             )
         );
 

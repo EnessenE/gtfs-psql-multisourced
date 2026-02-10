@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.realtime_configurations
     url text NOT NULL,
     header_secret text NULL,
     secret text NULL,
+    credits text NULL,
     CONSTRAINT realtime_configuration_pkey PRIMARY KEY (supplier_configuration_name, url)
 )
 
