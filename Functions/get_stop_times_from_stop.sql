@@ -229,7 +229,7 @@ WHERE
             EXTRACT(MINUTE FROM stop_times.departure_time)::int,
             EXTRACT(SECOND FROM stop_times.departure_time)
         ) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')
-    ) AT TIME ZONE 'UTC' >= timezone('utc', now())
+    ) AT TIME ZONE 'UTC' >= timezone('utc', from_time)
 
     AND EXISTS (
         SELECT 1 FROM stop_times st2
