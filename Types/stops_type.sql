@@ -1,5 +1,3 @@
-drop type stops_type cascade;
-
 CREATE TYPE public.stops_type AS (
     data_origin TEXT,
     id TEXT,

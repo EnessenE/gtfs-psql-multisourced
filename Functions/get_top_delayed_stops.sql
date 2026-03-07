@@ -2,21 +2,17 @@
 -- Description: Returns the top 10 stations with the biggest average delay at the current moment
 -- Over the most recent 100 delay records per stop, plus stations with most cancellations
 
-DROP FUNCTION IF EXISTS public.get_top_delayed_stops();
+-- DROP FUNCTION IF EXISTS public.get_top_delayed_stops();
 
-CREATE OR REPLACE FUNCTION public.get_top_delayed_stops()
-    RETURNS TABLE (
-        primary_stop_id uuid,
-        stop_id text,
-        stop_name text,
-        stop_type bigint,
-        data_origin text,
-        average_delay integer,
-        delay_count bigint,
-        cancellation_count bigint,
-        max_delay integer,
-        min_delay integer
-    ) AS $$
+CREATE OR REPLACE FUNCTION public.get_top_delayed_stops(
+	)
+    RETURNS TABLE(primary_stop_id uuid, stop_id text, stop_name text, stop_type bigint, data_origin text, average_delay integer, delay_count bigint, cancellation_count bigint, max_delay integer, min_delay integer) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
 BEGIN
     RETURN QUERY
     WITH
@@ -101,7 +97,8 @@ BEGIN
         delay_and_cancel.data_origin
     LIMIT 100;
 END;
-$$ LANGUAGE plpgsql;
+$BODY$;
 
+ALTER FUNCTION public.get_top_delayed_stops()
+    OWNER TO postgres;
 
-select * from public.get_top_delayed_stops()

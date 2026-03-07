@@ -1,7 +1,4 @@
 
-drop PROCEDURE upsert_position_array(position_entity_type[]);
-drop type position_entity_type;
-
 CREATE TYPE public.position_entity_type AS (
     data_origin text,
     last_updated timestamp with time zone,

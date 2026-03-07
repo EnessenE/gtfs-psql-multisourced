@@ -1,28 +1,17 @@
-DROP FUNCTION IF EXISTS public.get_alerts_from_data_origin_and_type(text, integer);
+-- FUNCTION: public.get_alerts_from_data_origin_and_type(text, integer)
 
-CREATE OR REPLACE FUNCTION public.get_alerts_from_data_origin_and_type(target_data_origin text, target_stop_type integer)
-    RETURNS TABLE(
-        stop_id text,
-        stop_data_origin text,
-        primary_stop uuid,
-        alert_id text,
-        alert_data_origin text,
-        created timestamp with time zone,
-        last_updated timestamp with time zone,
-        is_deleted boolean,
-        active_periods uuid,
-        cause text,
-        effect text,
-        url text,
-        header_text text,
-        description_text text,
-        tts_header_text text,
-        tts_description_text text,
-        severity_level text
-    )
+-- DROP FUNCTION IF EXISTS public.get_alerts_from_data_origin_and_type(text, integer);
+
+CREATE OR REPLACE FUNCTION public.get_alerts_from_data_origin_and_type(
+	target_data_origin text,
+	target_stop_type integer)
+    RETURNS TABLE(stop_id text, stop_data_origin text, primary_stop uuid, alert_id text, alert_data_origin text, created timestamp with time zone, last_updated timestamp with time zone, is_deleted boolean, active_periods uuid, cause text, effect text, url text, header_text text, description_text text, tts_header_text text, tts_description_text text, severity_level text) 
     LANGUAGE 'sql'
-    COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
-    AS $BODY$
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
         SELECT DISTINCT
             stops.id,
             stops.data_origin,
@@ -51,5 +40,8 @@ CREATE OR REPLACE FUNCTION public.get_alerts_from_data_origin_and_type(target_da
             AND public.alerts.data_origin = target_data_origin
         ORDER BY 
             alerts.last_updated DESC
-        LIMIT 100;
 $BODY$;
+
+ALTER FUNCTION public.get_alerts_from_data_origin_and_type(text, integer)
+    OWNER TO postgres;
+
