@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.shapes;
 
-CREATE TABLE IF NOT EXISTS public.shapes
+CREATE TABLE public.shapes
 (
     data_origin character varying(100) NOT NULL,
     id text NOT NULL,
@@ -24,7 +24,7 @@ ALTER TABLE IF EXISTS public.shapes
 
 -- DROP INDEX IF EXISTS public.ix_shapes_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_shapes_id_data_origin
+CREATE INDEX ix_shapes_id_data_origin
     ON public.shapes USING btree
     (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS ix_shapes_id_data_origin
 
 -- DROP INDEX IF EXISTS public.ix_shapes_import_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_shapes_import_id_data_origin
+CREATE INDEX ix_shapes_import_id_data_origin
     ON public.shapes USING btree
     (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.frequencies;
 
-CREATE TABLE IF NOT EXISTS public.frequencies
+CREATE TABLE public.frequencies
 (
     data_origin character varying(100) NOT NULL,
     trip_id text NOT NULL,
@@ -24,7 +24,7 @@ ALTER TABLE IF EXISTS public.frequencies
 
 -- DROP INDEX IF EXISTS public.ix_frequencies_import_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_frequencies_import_id_data_origin
+CREATE INDEX ix_frequencies_import_id_data_origin
     ON public.frequencies USING btree
     (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS ix_frequencies_import_id_data_origin
 
 -- DROP INDEX IF EXISTS public.ix_frequencies_internal_id;
 
-CREATE INDEX IF NOT EXISTS ix_frequencies_internal_id
+CREATE INDEX ix_frequencies_internal_id
     ON public.frequencies USING btree
     (internal_id ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -40,7 +40,7 @@ CREATE INDEX IF NOT EXISTS ix_frequencies_internal_id
 
 -- DROP INDEX IF EXISTS public.ix_frequencies_trip_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_frequencies_trip_id_data_origin
+CREATE INDEX ix_frequencies_trip_id_data_origin
     ON public.frequencies USING btree
     (trip_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

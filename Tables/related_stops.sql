@@ -6,8 +6,8 @@ CREATE TABLE public.related_stops
     primary_stop uuid NOT NULL,
     related_stop BIGINT NOT NULL,
     related_data_origin text,
-    CONSTRAINT related_stops_pkey PRIMARY KEY (primary_stop, related_stop)
-    CONSTRAINT related_stops_unique UNIQUE (primary_stop, related_stop, related_data_origin);
+    CONSTRAINT related_stops_pkey PRIMARY KEY (primary_stop, related_stop),
+    CONSTRAINT related_stops_unique UNIQUE (primary_stop, related_stop, related_data_origin)
     --CONSTRAINT fk_related_stops_related FOREIGN KEY (related_stop, related_data_origin) REFERENCES public.stops (internal_id, data_origin) ON DELETE CASCADE
 );
 

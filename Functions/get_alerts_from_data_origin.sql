@@ -1,27 +1,16 @@
-DROP FUNCTION IF EXISTS public.get_alerts_from_data_origin(TEXT);
+-- FUNCTION: public.get_alerts_from_data_origin(text)
+
+-- DROP FUNCTION IF EXISTS public.get_alerts_from_data_origin(text);
 
 CREATE OR REPLACE FUNCTION public.get_alerts_from_data_origin(
-    p_data_origin TEXT
-)
-RETURNS TABLE (
-    data_origin text,
-    internal_id text,
-    created timestamp with time zone,
-    last_updated timestamp with time zone,
-    id text,
-    is_deleted boolean,
-    active_periods text,
-    cause text,
-    effect text,
-    url text,
-    header_text text,
-    description_text text,
-    tts_header_text text,
-    tts_description_text text,
-    severity_level text
-)
-LANGUAGE plpgsql
-AS $$
+	p_data_origin text)
+    RETURNS TABLE(data_origin text, internal_id text, created timestamp with time zone, last_updated timestamp with time zone, id text, is_deleted boolean, active_periods text, cause text, effect text, url text, header_text text, description_text text, tts_header_text text, tts_description_text text, severity_level text) 
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+    ROWS 1000
+
+AS $BODY$
 BEGIN
     RETURN QUERY
     SELECT
@@ -46,6 +35,8 @@ BEGIN
         alerts.data_origin = p_data_origin
     limit 100;
 END;
-$$;
+$BODY$;
 
-select * from get_alerts_from_data_origin('OpenOV')
+ALTER FUNCTION public.get_alerts_from_data_origin(text)
+    OWNER TO postgres;
+

@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.supplier_type_mapping;
 
-CREATE TABLE IF NOT EXISTS public.supplier_type_mappings
+CREATE TABLE public.supplier_type_mappings
 (
     supplier_configuration_name text NOT NULL,
     listed_type integer NOT NULL,

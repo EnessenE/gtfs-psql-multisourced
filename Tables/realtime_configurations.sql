@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.realtime_configurations;
 
-CREATE TABLE IF NOT EXISTS public.realtime_configurations
+CREATE TABLE public.realtime_configurations
 (
     supplier_configuration_name text NOT NULL,
     polling_rate interval NOT NULL,

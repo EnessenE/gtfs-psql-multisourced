@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS public.alerts
+CREATE TABLE public.alerts
 (
     id text NOT NULL,
     data_origin text  NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.alerts
 
 -- DROP INDEX IF EXISTS public.ix_alerts_id;
 
-CREATE INDEX IF NOT EXISTS ix_alerts_id
+CREATE INDEX ix_alerts_id
     ON public.alerts USING btree
     (id ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -27,7 +27,7 @@ CREATE INDEX IF NOT EXISTS ix_alerts_id
 
 -- DROP INDEX IF EXISTS public.ix_alerts_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_alerts_id_data_origin
+CREATE INDEX ix_alerts_id_data_origin
     ON public.alerts USING btree
     (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

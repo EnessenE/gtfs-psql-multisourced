@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.stops;
 
-CREATE TABLE IF NOT EXISTS public.stops
+CREATE TABLE public.stops
 (
     data_origin character varying(100) NOT NULL,
     id text NOT NULL,
@@ -34,17 +34,17 @@ ALTER TABLE IF EXISTS public.stops
     OWNER to postgres;
 -- Index: example1_gpx
 
-CREATE INDEX CONCURRENTLY idx_stops_internal_id_data_origin ON public.stops (internal_id, data_origin);
-CREATE INDEX CONCURRENTLY example1_gpx_new ON public.stops USING gist (geography(geo_location));
-CREATE INDEX CONCURRENTLY ix_stops_id ON public.stops USING btree (id);
-CREATE INDEX CONCURRENTLY ix_stops_id_data_origin ON public.stops USING btree (id, data_origin);
-CREATE INDEX CONCURRENTLY ix_stops_id_data_origin_stop_type ON public.stops USING btree (id, data_origin, stop_type);
-CREATE INDEX CONCURRENTLY ix_stops_id_parent_station ON public.stops USING btree (id, parent_station);
-CREATE INDEX CONCURRENTLY ix_stops_id_stop_type ON public.stops USING btree (id, stop_type);
-CREATE INDEX CONCURRENTLY ix_stops_import_id_data_origin ON public.stops USING btree (import_id, data_origin);
-CREATE INDEX CONCURRENTLY ix_stops_internal_id_stop_type ON public.stops USING btree (internal_id, stop_type);
-CREATE INDEX CONCURRENTLY ix_stops_name_stop_type ON public.stops USING btree (name, stop_type);
-CREATE INDEX CONCURRENTLY ix_stops_parent_station ON public.stops USING btree (parent_station);
-CREATE INDEX CONCURRENTLY ix_stops_stop_type ON public.stops USING btree (stop_type);
-CREATE INDEX CONCURRENTLY stops_hash_stop_type ON public.stops USING hash (stop_type);
-CREATE INDEX CONCURRENTLY ix_stops_name ON public.stops USING GIST (name gist_trgm_ops);
+CREATE INDEX idx_stops_internal_id_data_origin ON public.stops (internal_id, data_origin);
+CREATE INDEX example1_gpx_new ON public.stops USING gist (geography(geo_location));
+CREATE INDEX ix_stops_id ON public.stops USING btree (id);
+CREATE INDEX ix_stops_id_data_origin ON public.stops USING btree (id, data_origin);
+CREATE INDEX ix_stops_id_data_origin_stop_type ON public.stops USING btree (id, data_origin, stop_type);
+CREATE INDEX ix_stops_id_parent_station ON public.stops USING btree (id, parent_station);
+CREATE INDEX ix_stops_id_stop_type ON public.stops USING btree (id, stop_type);
+CREATE INDEX ix_stops_import_id_data_origin ON public.stops USING btree (import_id, data_origin);
+CREATE INDEX ix_stops_internal_id_stop_type ON public.stops USING btree (internal_id, stop_type);
+CREATE INDEX ix_stops_name_stop_type ON public.stops USING btree (name, stop_type);
+CREATE INDEX ix_stops_parent_station ON public.stops USING btree (parent_station);
+CREATE INDEX ix_stops_stop_type ON public.stops USING btree (stop_type);
+CREATE INDEX stops_hash_stop_type ON public.stops USING hash (stop_type);
+CREATE INDEX ix_stops_name ON public.stops USING GIST (name gist_trgm_ops);

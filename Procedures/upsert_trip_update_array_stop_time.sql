@@ -1,5 +1,5 @@
-drop procedure upsert_trip_update_array_stop_time(trip_update_stop_time_type[]);
-drop type trip_update_stop_time_type;
+drop procedure if exists upsert_trip_update_array_stop_time(trip_update_stop_time_type[]);
+drop type if exists trip_update_stop_time_type;
 
 CREATE TYPE trip_update_stop_time_type AS (
     data_origin text,

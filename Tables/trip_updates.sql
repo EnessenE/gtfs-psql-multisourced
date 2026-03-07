@@ -16,4 +16,4 @@ CREATE TABLE trip_updates(
 );
 
 
-CREATE INDEX IF NOT EXISTS ix_trip_updates_trip_id_data_origin  ON public.trip_updates USING btree (trip_id ASC NULLS LAST, data_origin);
+CREATE INDEX ix_trip_updates_trip_id_data_origin  ON public.trip_updates USING btree (trip_id ASC NULLS LAST, data_origin);

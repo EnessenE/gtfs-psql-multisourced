@@ -1,5 +1,5 @@
 -- In reality we should split off this table to a "imports" table for historic data. But for now its a fine hack
-CREATE TABLE IF NOT EXISTS public.supplier_configurations
+CREATE TABLE public.supplier_configurations
 (
     name text NOT NULL,
     retrieval_type integer NOT NULL,
