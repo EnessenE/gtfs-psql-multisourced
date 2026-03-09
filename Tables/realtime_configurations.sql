@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS public.realtime_configurations
 (
     supplier_configuration_name text COLLATE pg_catalog."default" NOT NULL,
+    type text NOT NULL default('mixed'),
     polling_rate interval NOT NULL,
     last_attempt timestamp with time zone,
     url text COLLATE pg_catalog."default" NOT NULL,

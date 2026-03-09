@@ -1,8 +1,7 @@
-drop function if exists get_all_realtime_feeds();
-
 CREATE OR REPLACE FUNCTION public.get_all_realtime_feeds()
     RETURNS TABLE(
         supplier_configuration_name text,
+        type text,
         url text,
         polling_rate interval,
 		last_attempt timestamp with time zone,
@@ -14,6 +13,7 @@ CREATE OR REPLACE FUNCTION public.get_all_realtime_feeds()
     AS $BODY$
     SELECT
         supplier_configuration_name,
+        type,
         url,
         polling_rate,
         last_attempt,
