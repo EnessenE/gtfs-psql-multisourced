@@ -18,6 +18,7 @@ DECLARE
 
     -- Grouping and thresholds
     v_chosen_guid           uuid;
+    v_existing_group_count  integer := 0;
     v_distance_strict       float := 75;
     v_distance_loose        float := 250;
     v_name_similarity_threshold float := 0.6;
@@ -28,6 +29,12 @@ BEGIN
         related_stop bigint,
         related_data_origin character varying(100),
         PRIMARY KEY (related_stop, related_data_origin)
+    ) ON COMMIT DROP;
+
+    -- Track existing groups touched by this merge so we can reuse/merge them
+    -- instead of creating overlapping groups.
+    CREATE TEMP TABLE temp_existing_groups (
+        primary_stop uuid PRIMARY KEY
     ) ON COMMIT DROP;
 
     -- 1. Find the target stop's details.
@@ -56,16 +63,7 @@ BEGIN
         LIMIT 1), NULL)
     WHERE data_origin = p_supplier_data_origin AND id = p_target_stop_id;
 
-    -- 3. Check if the target stop is already part of a group.
-    IF EXISTS (
-         SELECT 1 FROM public.related_stops rs
-         WHERE rs.related_stop = v_target_internal_id
-    ) THEN
-         RAISE NOTICE 'Target stop (internal_id: %, data_origin: %) is already in a group. Skipping.', v_target_internal_id, v_target_data_origin;
-         RETURN;
-    END IF;
-
-    -- 4. PERFORMANCE OPTIMIZATION: Broad Phase - Find all potential candidates.
+        -- 3. PERFORMANCE OPTIMIZATION: Broad Phase - Find all potential candidates.
     -- This query is fast because it uses GIST indexes for geography and name similarity.
     INSERT INTO temp_stops_to_group(related_stop, related_data_origin)
     SELECT s.internal_id, s.data_origin
@@ -84,7 +82,7 @@ BEGIN
             )
         );
 
-    -- 5. PERFORMANCE OPTIMIZATION: Narrow Phase - Remove subsequent stops.
+    -- 4. PERFORMANCE OPTIMIZATION: Narrow Phase - Remove subsequent stops.
     -- This single, set-based DELETE is far more efficient than a row-by-row check.
     DELETE FROM temp_stops_to_group t
     USING stop_times st1, stop_times st2, stops s
@@ -94,15 +92,55 @@ BEGIN
       AND st1.stop_id = p_target_stop_id AND st1.data_origin = p_supplier_data_origin -- Filter to trips serving the target stop
       AND st1.stop_sequence != st2.stop_sequence; -- Ensure they are different stops on the same trip
 
-    -- 6. Always add the target stop itself to the final group.
+        -- 5. Always add the target stop itself to the final group.
     INSERT INTO temp_stops_to_group(related_stop, related_data_origin)
     VALUES (v_target_internal_id, v_target_data_origin)
     ON CONFLICT (related_stop, related_data_origin) DO NOTHING;
 
-    -- 7. Determine the Group ID.
-    v_chosen_guid := uuid_generate_v4();
+        -- 6. Find any existing groups already touched by the candidate set.
+        -- This includes the target stop itself and any previously grouped nearby stops.
+        INSERT INTO temp_existing_groups(primary_stop)
+        SELECT DISTINCT rs.primary_stop
+        FROM public.related_stops rs
+        INNER JOIN temp_stops_to_group t
+                ON t.related_stop = rs.related_stop
+             AND t.related_data_origin = rs.related_data_origin;
 
-    -- 8. Insert all valid stops into the group.
+        SELECT COUNT(*), MIN(primary_stop)
+        INTO v_existing_group_count, v_chosen_guid
+        FROM temp_existing_groups;
+
+        IF v_existing_group_count = 0 THEN
+                v_chosen_guid := uuid_generate_v4();
+        ELSE
+                RAISE NOTICE 'Reusing % existing group(s); chosen group ID: %.', v_existing_group_count, v_chosen_guid;
+        END IF;
+
+        -- 7. Expand the candidate set with all members of any touched groups.
+        -- This prevents splitting one logical station across multiple groups.
+        INSERT INTO temp_stops_to_group(related_stop, related_data_origin)
+        SELECT rs.related_stop, rs.related_data_origin
+        FROM public.related_stops rs
+        INNER JOIN temp_existing_groups g
+                ON g.primary_stop = rs.primary_stop
+        ON CONFLICT (related_stop, related_data_origin) DO NOTHING;
+
+        -- 8. Merge any touched groups into the chosen group.
+        UPDATE public.related_stops rs
+        SET primary_stop = v_chosen_guid
+        FROM temp_existing_groups g
+        WHERE rs.primary_stop = g.primary_stop
+            AND rs.primary_stop <> v_chosen_guid;
+
+        -- 9. Ensure every candidate stop belongs to only one group.
+        -- Without this, a stop can exist in multiple groups and cause duplicate/split stations.
+        DELETE FROM public.related_stops rs
+        USING temp_stops_to_group t
+        WHERE rs.related_stop = t.related_stop
+            AND rs.related_data_origin = t.related_data_origin
+            AND rs.primary_stop <> v_chosen_guid;
+
+        -- 10. Insert all valid stops into the chosen group.
     INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
     SELECT v_chosen_guid, t.related_stop, t.related_data_origin
     FROM temp_stops_to_group t
