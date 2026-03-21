@@ -1,7 +1,10 @@
 -- FUNCTION: public.get_routes_from_stop(uuid, integer)
 -- DROP FUNCTION IF EXISTS public.get_routes_from_stop(uuid, integer);
+DROP FUNCTION IF EXISTS public.get_routes_from_stop(text, integer);
+
 CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target text, target_stop_type integer)
     RETURNS TABLE(
+        id text,
         data_origin text,
         agency text,
         short_name text,
@@ -54,6 +57,7 @@ trip_data AS(
         FROM
             stop_data))
 SELECT
+    routes.id,
     routes.data_origin,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
@@ -76,6 +80,7 @@ WHERE(routes.id,
         FROM
             trip_data)
 GROUP BY
+    routes.id,
     routes.data_origin,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
