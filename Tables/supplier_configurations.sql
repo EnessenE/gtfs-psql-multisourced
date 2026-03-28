@@ -2,6 +2,7 @@
 CREATE TABLE public.supplier_configurations
 (
     name text NOT NULL,
+    enabled boolean NOT NULL DEFAULT true,
     retrieval_type integer NOT NULL,
     credits text NOT NULL,
     data_type integer NOT NULL,

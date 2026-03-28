@@ -106,9 +106,15 @@ BEGIN
                 ON t.related_stop = rs.related_stop
              AND t.related_data_origin = rs.related_data_origin;
 
-        SELECT COUNT(*), MIN(primary_stop)
-        INTO v_existing_group_count, v_chosen_guid
+        SELECT COUNT(*)
+        INTO v_existing_group_count
         FROM temp_existing_groups;
+
+        SELECT primary_stop
+        INTO v_chosen_guid
+        FROM temp_existing_groups
+        ORDER BY primary_stop
+        LIMIT 1;
 
         IF v_existing_group_count = 0 THEN
                 v_chosen_guid := uuid_generate_v4();
@@ -126,6 +132,30 @@ BEGIN
         ON CONFLICT (related_stop, related_data_origin) DO NOTHING;
 
         -- 8. Merge any touched groups into the chosen group.
+        -- First deduplicate touched groups by related_stop. Without this, two
+        -- different source groups can carry the same related_stop and collide on
+        -- (primary_stop, related_stop) during the update.
+        DELETE FROM public.related_stops rs
+        USING (
+            SELECT ctid
+            FROM (
+                SELECT
+                    rs.ctid,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY rs.related_stop
+                        ORDER BY
+                            CASE WHEN rs.primary_stop = v_chosen_guid THEN 0 ELSE 1 END,
+                            rs.primary_stop,
+                            rs.related_data_origin
+                    ) AS rn
+                FROM public.related_stops rs
+                INNER JOIN temp_existing_groups g
+                    ON g.primary_stop = rs.primary_stop
+            ) ranked
+            WHERE ranked.rn > 1
+        ) duplicates
+        WHERE rs.ctid = duplicates.ctid;
+
         UPDATE public.related_stops rs
         SET primary_stop = v_chosen_guid
         FROM temp_existing_groups g
@@ -144,7 +174,7 @@ BEGIN
     INSERT INTO public.related_stops(primary_stop, related_stop, related_data_origin)
     SELECT v_chosen_guid, t.related_stop, t.related_data_origin
     FROM temp_stops_to_group t
-    ON CONFLICT (primary_stop, related_stop, related_data_origin) DO NOTHING;
+    ON CONFLICT (primary_stop, related_stop) DO NOTHING;
 
     RAISE NOTICE 'Merge process for target stop (id: %, data_origin: %) completed for group ID: %.', p_target_stop_id, p_supplier_data_origin, v_chosen_guid;
 

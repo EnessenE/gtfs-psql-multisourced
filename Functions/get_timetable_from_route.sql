@@ -70,7 +70,8 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
     -- When target_date is provided, only trips running on that date are included.
     route_trips AS (
         SELECT
-            trips.id,
+            trips.id AS gtfs_trip_id,
+            trips.internal_id::text AS internal_trip_id,
             trips.headsign,
             trips.data_origin,
             trips.import_id,
@@ -118,7 +119,7 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
                   AND LOWER(cd2.exception_type) = 'added'
             )
         )
-        GROUP BY trips.id, trips.headsign, trips.data_origin, trips.import_id
+        GROUP BY trips.id, trips.internal_id, trips.headsign, trips.data_origin, trips.import_id
         ORDER BY MIN(stop_times.departure_time) NULLS LAST
         LIMIT 100
     )
@@ -127,12 +128,12 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
         related_stops.primary_stop::text                    AS stop_id,
         MIN(stops.name)                                     AS stop_name,
         COALESCE(MIN(canonical_stop_order.seq), 999999)     AS stop_sequence,
-        route_trips.id                                      AS trip_id,
+        route_trips.internal_trip_id                        AS trip_id,
         route_trips.headsign                                AS trip_headsign,
         MIN(stop_times.departure_time)                      AS departure_time
     FROM route_trips
     INNER JOIN stop_times
-        ON stop_times.trip_id    = route_trips.id
+        ON stop_times.trip_id    = route_trips.gtfs_trip_id
        AND stop_times.data_origin = route_trips.data_origin
        AND stop_times.import_id   = route_trips.import_id
     INNER JOIN stops
@@ -146,11 +147,11 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
         ON canonical_stop_order.primary_stop = related_stops.primary_stop
     GROUP BY
         related_stops.primary_stop,
-        route_trips.id,
+        route_trips.internal_trip_id,
         route_trips.headsign,
         route_trips.first_departure
     ORDER BY
         COALESCE(MIN(canonical_stop_order.seq), 999999),
         route_trips.first_departure NULLS LAST,
-        route_trips.id
+        route_trips.internal_trip_id
 $BODY$;

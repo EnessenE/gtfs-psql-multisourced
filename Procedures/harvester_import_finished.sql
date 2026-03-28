@@ -8,7 +8,8 @@ BEGIN
     UPDATE supplier_configurations
     SET 
        last_import_success = now(),
-       download_pending = false
+       download_pending = false,
+       latest_succesfull_import_id = (select queued_import_id from supplier_configurations where lower(name) = lower(__dataorigin) limit 1)
     WHERE 
         lower(name) = lower(__dataorigin);
 END;

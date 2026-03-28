@@ -109,7 +109,7 @@ SELECT
              FROM stop_times
              JOIN stops ON stops.id = stop_times.stop_id AND stops.data_origin = stop_times.data_origin
              JOIN supplier_configurations ON supplier_configurations.name = stop_times.data_origin
-             WHERE stop_times.trip_id = trips.id AND stop_times.data_origin = trips.data_origin and stop_times.import_id = supplier_configurations.latest_succesfull_import_id
+             WHERE stop_times.trip_id = trips.id AND stop_times.data_origin = trips.data_origin --and stop_times.import_id = supplier_configurations.latest_succesfull_import_id
              ORDER BY stop_sequence DESC
              LIMIT 1),
             ' (?)')

@@ -51,4 +51,5 @@ AS $$
         header_key,
         header_value
     FROM supplier_configurations
+    where enabled = true
     $$;
