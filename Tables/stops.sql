@@ -48,3 +48,6 @@ CREATE INDEX ix_stops_parent_station ON public.stops USING btree (parent_station
 CREATE INDEX ix_stops_stop_type ON public.stops USING btree (stop_type);
 CREATE INDEX stops_hash_stop_type ON public.stops USING hash (stop_type);
 CREATE INDEX ix_stops_name ON public.stops USING GIST (name gist_trgm_ops);
+-- Critical for get_map_stops_in_bounds: WHERE latitude BETWEEN .. AND longitude BETWEEN ..
+-- Without this, every map pan causes a seq scan on the stops table.
+CREATE INDEX ix_stops_lat_lon ON public.stops USING btree (latitude, longitude);
