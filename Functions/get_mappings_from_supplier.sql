@@ -1,4 +1,3 @@
--- FUNCTION: public.get_trip_from_id(text)
 CREATE OR REPLACE FUNCTION public.get_mappings_from_supplier(target text)
     RETURNS TABLE(
         listed_type integer,

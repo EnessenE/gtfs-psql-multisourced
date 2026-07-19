@@ -1,7 +1,10 @@
 -- FUNCTION: public.get_routes_from_stop(uuid, integer)
 -- DROP FUNCTION IF EXISTS public.get_routes_from_stop(uuid, integer);
-CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target uuid, target_stop_type integer)
+DROP FUNCTION IF EXISTS public.get_routes_from_stop(text, integer);
+
+CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target text, target_stop_type integer)
     RETURNS TABLE(
+        id text,
         data_origin text,
         agency text,
         short_name text,
@@ -23,7 +26,7 @@ CREATE OR REPLACE FUNCTION public.get_routes_from_stop(target uuid, target_stop_
             stops
             INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
         WHERE
-            primary_stop = target
+            primary_stop = target::uuid
             AND stop_type = target_stop_type
 ),
 stop_data AS(
@@ -31,7 +34,7 @@ stop_data AS(
         trip_id,
         data_origin
     FROM
-        stop_times2
+        stop_times
     WHERE(stop_id,
         data_origin) IN(
         SELECT
@@ -54,6 +57,7 @@ trip_data AS(
         FROM
             stop_data))
 SELECT
+    routes.id,
     routes.data_origin,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
@@ -76,6 +80,7 @@ WHERE(routes.id,
         FROM
             trip_data)
 GROUP BY
+    routes.id,
     routes.data_origin,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
@@ -89,8 +94,3 @@ GROUP BY
 ORDER BY
     short_name ASC
 $BODY$;
-
-ALTER FUNCTION public.get_routes_from_stop(uuid, integer) OWNER TO dennis;
-
-
-selecT * from get_routes_from_stop('0c94a1e8-0a61-4bea-a36d-9814aa0f1f1e'::uuid, 2)

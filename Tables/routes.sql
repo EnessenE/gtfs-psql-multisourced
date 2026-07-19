@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.routes;
 
-CREATE TABLE IF NOT EXISTS public.routes
+CREATE TABLE public.routes
 (
     data_origin character varying(100) NOT NULL,
     id text NOT NULL,
@@ -31,7 +31,7 @@ ALTER TABLE IF EXISTS public.routes
 CREATE INDEX idx_routes_id_data_origin ON routes(id, data_origin);
 
 
-CREATE INDEX IF NOT EXISTS ix_routes_agency_id
+CREATE INDEX ix_routes_agency_id
     ON public.routes USING btree
     (agency_id ASC NULLS LAST);
     
@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_agency_id
 
 -- DROP INDEX IF EXISTS public.ix_routes_id;
 
-CREATE INDEX IF NOT EXISTS ix_routes_id
+CREATE INDEX ix_routes_id
     ON public.routes USING btree
     (id ASC NULLS LAST);
     
@@ -47,7 +47,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_id
 
 -- DROP INDEX IF EXISTS public.ix_routes_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_routes_id_data_origin
+CREATE INDEX ix_routes_id_data_origin
     ON public.routes USING btree
     (id ASC NULLS LAST, data_origin ASC NULLS LAST);
     
@@ -55,7 +55,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_id_data_origin
 
 -- DROP INDEX IF EXISTS public.ix_routes_import_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_routes_import_id_data_origin
+CREATE INDEX ix_routes_import_id_data_origin
     ON public.routes USING btree
     (import_id ASC NULLS LAST, data_origin ASC NULLS LAST);
     
@@ -63,7 +63,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_import_id_data_origin
 
 -- DROP INDEX IF EXISTS public.ix_routes_internal_id;
 
-CREATE INDEX IF NOT EXISTS ix_routes_internal_id
+CREATE INDEX ix_routes_internal_id
     ON public.routes USING btree
     (internal_id ASC NULLS LAST);
     
@@ -71,7 +71,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_internal_id
 
 -- DROP INDEX IF EXISTS public.ix_routes_long_name;
 
-CREATE INDEX IF NOT EXISTS ix_routes_long_name
+CREATE INDEX ix_routes_long_name
     ON public.routes USING btree
     (long_name ASC NULLS LAST);
     
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS ix_routes_long_name
 
 -- DROP INDEX IF EXISTS public.ix_routes_short_name;
 
-CREATE INDEX IF NOT EXISTS ix_routes_short_name
+CREATE INDEX ix_routes_short_name
     ON public.routes USING btree
     (short_name ASC NULLS LAST);
     

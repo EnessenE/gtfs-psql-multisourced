@@ -1,6 +1,6 @@
 drop function if exists public.get_stoplocations_from_id(uuid, int);
 
-CREATE OR REPLACE FUNCTION public.get_stoplocations_from_id(target uuid, target_stop_type int)
+CREATE OR REPLACE FUNCTION public.get_stoplocations_from_id(target text, target_stop_type int)
     RETURNS TABLE(
         id text,
         code text,
@@ -36,10 +36,8 @@ CREATE OR REPLACE FUNCTION public.get_stoplocations_from_id(target uuid, target_
         stops
         INNER JOIN related_stops ON related_stops.related_stop = stops.internal_id
             AND related_stops.related_data_origin = stops.data_origin
-    WHERE(primary_stop = target
+    WHERE(primary_stop = target::uuid
         AND stop_type = target_stop_type)
 $BODY$;
 
-ALTER FUNCTION public.get_stoplocations_from_id(uuid, int) OWNER TO dennis;
 
-select * from get_stoplocations_from_id('uwu'::uuid, 1)

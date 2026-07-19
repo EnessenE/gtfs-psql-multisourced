@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.calendars;
 
-CREATE TABLE IF NOT EXISTS public.calendars
+CREATE TABLE public.calendars
 (
     data_origin character varying(100) NOT NULL,
     service_id text NOT NULL,
@@ -29,7 +29,7 @@ ALTER TABLE IF EXISTS public.calendars
 
 -- DROP INDEX IF EXISTS public.ix_calendars_import_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_calendars_import_id_data_origin
+CREATE INDEX ix_calendars_import_id_data_origin
     ON public.calendars USING btree
     (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -37,7 +37,7 @@ CREATE INDEX IF NOT EXISTS ix_calendars_import_id_data_origin
 
 -- DROP INDEX IF EXISTS public.ix_calendars_internal_id;
 
-CREATE INDEX IF NOT EXISTS ix_calendars_internal_id
+CREATE INDEX ix_calendars_internal_id
     ON public.calendars USING btree
     (internal_id ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -45,7 +45,7 @@ CREATE INDEX IF NOT EXISTS ix_calendars_internal_id
 
 -- DROP INDEX IF EXISTS public.ix_calendars_service_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_calendars_service_id_data_origin
+CREATE INDEX ix_calendars_service_id_data_origin
     ON public.calendars USING btree
     (service_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

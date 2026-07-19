@@ -1,68 +1,68 @@
--- Table: public.stop_times
-
 -- DROP TABLE IF EXISTS public.stop_times;
 
-CREATE TABLE IF NOT EXISTS public.stop_times
+CREATE TABLE public.stop_times
 (
+    internal_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY,
     data_origin character varying(100) NOT NULL,
     trip_id text NOT NULL,
     stop_id text NOT NULL,
     stop_sequence bigint NOT NULL,
     arrival_time time without time zone,
     departure_time time without time zone,
+    days_since_start_arrival integer not null default(0),
+    days_since_start_departure integer not null default(0),
     stop_headsign text,
     pickup_type integer,
     drop_off_type integer,
     shape_dist_travelled double precision,
     timepoint_type integer,
-    internal_id uuid NOT NULL,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
-    CONSTRAINT pk_stop_times PRIMARY KEY (internal_id)
-);
+    CONSTRAINT pk_stop_times PRIMARY KEY (internal_id, data_origin, import_id)
+) PARTITION BY RANGE (data_origin, import_id);
 
+CREATE TABLE public.stop_times_default PARTITION OF public.stop_times
+DEFAULT;
 
 ALTER TABLE stop_times
 ADD CONSTRAINT unique_stop_times UNIQUE (data_origin, trip_id, stop_id, stop_sequence, import_id);
 
 CREATE UNIQUE INDEX ix_unique_stop_times ON stop_times (data_origin, trip_id, stop_id, stop_sequence, import_id);
 
-CREATE INDEX IF NOT EXISTS ix_stop_times_pk
+CREATE INDEX ix_stop_times_pk
     ON public.stop_times USING btree
-    (internal_id ASC NULLS LAST)
-    TABLESPACE pg_default;
+    (internal_id ASC NULLS LAST);
 
 ALTER TABLE IF EXISTS public.stop_times
     OWNER to postgres;
--- Index: ix_stop_times_arrival_time_departure_time
 
+-- Index: ix_stop_times_arrival_time_departure_time
 -- DROP INDEX IF EXISTS public.ix_stop_times_arrival_time_departure_time;
 
-CREATE INDEX IF NOT EXISTS ix_stop_times_arrival_time_departure_time
+CREATE INDEX ix_stop_times_arrival_time_departure_time
     ON public.stop_times USING btree
-    (arrival_time ASC NULLS LAST, departure_time ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: ix_stop_times_import_id_data_origin
+    (arrival_time ASC NULLS LAST, departure_time ASC NULLS LAST);
 
+-- Index: ix_stop_times_import_id_data_origin
 -- DROP INDEX IF EXISTS public.ix_stop_times_import_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_stop_times_import_id_data_origin
-    ON public.stop_times USING btree
-    (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
-    TABLESPACE pg_default;
--- Index: ix_stop_times_internal_id
+CREATE INDEX ix_stop_times_arrival_time_range
+    ON public.stop_times USING btree (arrival_time);
 
--- DROP INDEX IF EXISTS public.ix_stop_times_stop_id;
 
-CREATE INDEX IF NOT EXISTS ix_stop_times_stop_id
+CREATE INDEX ix_stop_times_stop_id
     ON public.stop_times USING btree
-    (stop_id ASC NULLS LAST)
-    TABLESPACE pg_default;
+    (stop_id ASC NULLS LAST);
+
 -- Index: ix_stop_times_trip_id_data_origin
-
 -- DROP INDEX IF EXISTS public.ix_stop_times_trip_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_stop_times_trip_id_data_origin
+CREATE INDEX ix_stop_times_trip_id_data_origin
     ON public.stop_times USING btree
-    (trip_id ASC NULLS LAST, data_origin ASC NULLS LAST)
-    TABLESPACE pg_default;
+    (trip_id ASC NULLS LAST, data_origin ASC NULLS LAST);
+
+-- DROP INDEX IF EXISTS public.ix_stop_times_stop_id_data_origin;
+
+CREATE INDEX ix_stop_times_stop_id_data_origin
+    ON public.stop_times USING btree
+    (stop_id ASC NULLS LAST, data_origin ASC NULLS LAST);

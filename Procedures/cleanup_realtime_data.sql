@@ -5,24 +5,22 @@ LANGUAGE 'plpgsql'
 AS $BODY$
 BEGIN
     DELETE FROM position_entities
-    WHERE last_updated < now () - INTERVAL '20 minutes';
+    WHERE last_updated < now () - INTERVAL '5 minutes' or measurement_time < now () - INTERVAL '5 minutes';
 
     DELETE FROM alert_entities
-    WHERE last_updated < now () - INTERVAL '20 minutes';
+    WHERE last_updated < now () - INTERVAL '5 minutes';
 
     DELETE FROM alerts
-    WHERE last_updated < now () - INTERVAL '20 minutes';
+    WHERE last_updated < now () - INTERVAL '5 minutes';
 
     DELETE FROM trip_updates
-    WHERE last_updated < now () - INTERVAL '20 minutes';
+    WHERE last_updated < now () - INTERVAL '5 minutes';
 
     DELETE FROM trip_updates_stop_times
-    WHERE last_updated < now () - INTERVAL '20 minutes';
+    WHERE last_updated < now () - INTERVAL '5 minutes';
 
     DELETE FROM alert_active_periods
-    WHERE last_updated < now () - INTERVAL '20 minutes';
+    WHERE last_updated < now () - INTERVAL '5 minutes';
 END;
 $BODY$;
-
-ALTER PROCEDURE public.cleanup_realtime_data() OWNER TO dennis;
 

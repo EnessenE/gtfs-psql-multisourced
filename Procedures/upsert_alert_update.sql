@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE upsert_alert_update_array(IN updates alert_update[])
+CREATE OR REPLACE PROCEDURE upsert_alert_update(IN updates alert_update[])
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -6,11 +6,10 @@ DECLARE
 BEGIN
     -- Loop through the array of alert_update
     FOREACH update_item IN ARRAY updates LOOP
-        INSERT INTO alerts(id, data_origin, internal_id, last_updated, effect, cause, severity_level, url, header_text, description_text)
+        INSERT INTO alerts(id, data_origin, last_updated, effect, cause, severity_level, url, header_text, description_text)
             VALUES (
                 update_item.id,
                 update_item.data_origin,
-                update_item.internal_id,
                 update_item.last_updated,
                 update_item.effect,
                 update_item.cause,

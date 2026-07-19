@@ -1,4 +1,4 @@
-DROP PROCEDURE update_supplier_for_download(text,timestamp with time zone,boolean) ;
+DROP PROCEDURE if exists update_supplier_for_download(text,timestamp with time zone,boolean) ;
 
 CREATE OR REPLACE PROCEDURE public.update_supplier_for_download(IN target text, IN last_update timestamp with time zone, IN successfully_downloaded boolean)
 LANGUAGE 'plpgsql'

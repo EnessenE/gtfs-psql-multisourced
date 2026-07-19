@@ -2,7 +2,7 @@
 
 -- DROP TABLE IF EXISTS public.calendar_dates;
 
-CREATE TABLE IF NOT EXISTS public.calendar_dates
+CREATE TABLE public.calendar_dates
 (
     data_origin character varying(100) NOT NULL,
     service_id text NOT NULL,
@@ -28,14 +28,14 @@ ALTER TABLE IF EXISTS public.calendar_dates
 
 -- DROP INDEX IF EXISTS public.ix_calendar_dates_date;
 
-CREATE INDEX IF NOT EXISTS ix_calendar_dates_date
+CREATE INDEX ix_calendar_dates_date
     ON public.calendar_dates USING btree
     (date ASC NULLS LAST)
     TABLESPACE pg_default;
 -- Index: ix_calendar_dates_date_data_origin
 
 
-CREATE INDEX IF NOT EXISTS ix_calendar_dates_service_id_data_origin_date
+CREATE INDEX ix_calendar_dates_service_id_data_origin_date
     ON public.calendar_dates USING btree
     (service_id ASC NULLS LAST, data_origin ASC NULLS LAST, date ASC NULLS LAST)
     TABLESPACE pg_default;

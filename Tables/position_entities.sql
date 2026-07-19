@@ -1,14 +1,13 @@
 -- Table: public.position_entities
 
--- DROP TABLE IF EXISTS public.position_entities;
+DROP TABLE IF EXISTS public.position_entities;
 
-CREATE TABLE IF NOT EXISTS public.position_entities
+CREATE TABLE public.position_entities
 (
     data_origin character varying(100) NOT NULL,
-    internal_id uuid NOT NULL,
-    last_updated timestamp with time zone NOT NULL,
 
     id text NOT NULL,
+    last_updated timestamp with time zone NOT NULL,
     trip_id text,
 
     latitude double precision,
@@ -35,7 +34,7 @@ ALTER TABLE IF EXISTS public.position_entities
 
 -- DROP INDEX IF EXISTS public.example1_gpx;
 
-CREATE INDEX IF NOT EXISTS ix_position_entities_geo_location
+CREATE INDEX ix_position_entities_geo_location
     ON public.position_entities USING gist
     (geography(geo_location))
     TABLESPACE pg_default;
@@ -43,7 +42,7 @@ CREATE INDEX IF NOT EXISTS ix_position_entities_geo_location
 
 -- DROP INDEX IF EXISTS public.ix_position_entities_id;
 
-CREATE INDEX IF NOT EXISTS ix_position_entities_id
+CREATE INDEX ix_position_entities_id
     ON public.position_entities USING btree
     (id ASC NULLS LAST)
     TABLESPACE pg_default;
@@ -51,14 +50,14 @@ CREATE INDEX IF NOT EXISTS ix_position_entities_id
 
 -- DROP INDEX IF EXISTS public.ix_position_entities_id_data_origin;
 
-CREATE INDEX IF NOT EXISTS ix_position_entities_id_data_origin
+CREATE INDEX ix_position_entities_id_data_origin
     ON public.position_entities USING btree
     (id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
 
-CREATE INDEX IF NOT EXISTS ix_position_entities_trip_id_data_origin
+CREATE INDEX ix_position_entities_trip_id_data_origin
 
--- Index: ix_position_entities_id_data_origin_stop_typeCREATE INDEX IF NOT EXISTS ix_position_entities_id_data_origin
+-- Index: ix_position_entities_id_data_origin_stop_typeCREATE INDEX ix_position_entities_id_data_origin
     ON public.position_entities USING btree
     (trip_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;

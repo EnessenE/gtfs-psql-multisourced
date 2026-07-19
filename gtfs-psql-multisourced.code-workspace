@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"editor.defaultFormatter": "inferrinizzard.prettier-sql-vscode",
+		"prettier-sql.SQLDialect": "postgresql"
+	},
+	"extensions": {
+		"recommendations": [
+			"esbenp.prettier-vscode",
+			"inferrinizzard.prettier-sql-vscode"
+		]
+	}
+}

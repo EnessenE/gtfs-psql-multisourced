@@ -2,6 +2,8 @@ DROP FUNCTION IF EXISTS get_routes_from_data_origin(text);
 
 CREATE OR REPLACE FUNCTION public.get_routes_from_data_origin(target_data_origin text)
     RETURNS TABLE(
+        data_origin text,
+        id text,
         agency text,
         short_name text,
         long_name text,
@@ -14,6 +16,8 @@ CREATE OR REPLACE FUNCTION public.get_routes_from_data_origin(target_data_origin
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
     AS $BODY$
 SELECT
+    routes.data_origin,
+    routes.id,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
     long_name,
@@ -28,6 +32,8 @@ FROM
         AND agencies.data_origin = routes.data_origin
 WHERE routes.data_origin = target_data_origin
 GROUP BY
+    routes.data_origin,
+    routes.id,
     COALESCE(agencies.name, 'Unknown agency'),
     short_name,
     long_name,
@@ -44,3 +50,4 @@ SELECT
     *
 FROM
     get_routes_from_data_origin('OpenOV')
+

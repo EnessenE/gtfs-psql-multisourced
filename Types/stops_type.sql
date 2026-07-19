@@ -15,7 +15,6 @@ CREATE TYPE public.stops_type AS (
     level_id TEXT,
     platform_code TEXT,
     stop_type_data int,
-    internal_id uuid,
     last_updated timestamp with time zone,
     import_id uuid
 );

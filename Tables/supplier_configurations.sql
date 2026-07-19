@@ -1,8 +1,10 @@
 -- In reality we should split off this table to a "imports" table for historic data. But for now its a fine hack
-CREATE TABLE IF NOT EXISTS public.supplier_configurations
+CREATE TABLE public.supplier_configurations
 (
     name text NOT NULL,
+    enabled boolean NOT NULL DEFAULT true,
     retrieval_type integer NOT NULL,
+    credits text NOT NULL,
     data_type integer NOT NULL,
     polling_rate interval NOT NULL,
     url text NOT NULL,
@@ -24,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.supplier_configurations
     header_key text NULL,
     header_value text NULL,
     delay_import_by time without time zone NOT NULL DEFAULT '00:30:00'::time without time zone,
+    coverage_range integer DEFAULT 10000,
     CONSTRAINT pk_supplier_configurations PRIMARY KEY (name)
 )
 

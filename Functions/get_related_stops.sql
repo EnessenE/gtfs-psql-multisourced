@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION public.get_related_stops(target uuid, target_stop_type int)
+CREATE OR REPLACE FUNCTION public.get_related_stops(target text, target_stop_type int)
     RETURNS TABLE(
         id text,
         name text,
@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target uuid, target_stop_typ
 			related_stops	
 			INNER JOIN stops ON related_stops.related_stop = stops.internal_id and related_stops.related_data_origin = stops.data_origin
 		WHERE
-			primary_stop = target
+			primary_stop = target::uuid
 		limit 1)
 	SELECT
 		primary_stop id,
@@ -25,5 +25,5 @@ CREATE OR REPLACE FUNCTION public.get_related_stops(target uuid, target_stop_typ
 	WHERE
 	(ST_DWithin(stops.geo_location, (select geo_location from stop_data limit 1), 800, FALSE))
 	AND stop_type IS NOT NULL
-	AND NOT (primary_stop = target and stop_type = target_stop_type)
+	AND NOT (primary_stop = target::uuid and stop_type = target_stop_type)
 $BODY$;
