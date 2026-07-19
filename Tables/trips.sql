@@ -84,6 +84,13 @@ CREATE INDEX ix_trips_service_id_data_origin
     ON public.trips USING btree
     (service_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
+-- Index: ix_trips_shape_id_data_origin
+-- Critical for get_routes_near_point and get_routes_from_shape: resolves shape -> trip -> route
+
+CREATE INDEX ix_trips_shape_id_data_origin
+    ON public.trips USING btree
+    (shape_id ASC NULLS LAST, data_origin ASC NULLS LAST)
+    TABLESPACE pg_default;
 -- Index: ix_trips_shape_id
 
 -- DROP INDEX IF EXISTS public.ix_trips_shape_id;

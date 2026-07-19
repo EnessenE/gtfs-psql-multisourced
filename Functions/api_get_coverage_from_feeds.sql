@@ -24,6 +24,13 @@ AS $BODY$
         FROM stops
         INNER JOIN supplier_configurations on stops.data_origin = supplier_configurations.name
         WHERE stop_type IS NOT NULL
+          /* 
+             Filter out coordinates that are invalid for EPSG:3857 (Web Mercator).
+             Web Mercator is mathematically undefined beyond ~85.05 degrees latitude.
+             Filtering prevents the "Invalid coordinate" error during ST_Transform.
+          */
+          AND ST_X(geo_location) BETWEEN -180 AND 180
+          AND ST_Y(geo_location) BETWEEN -85.0511 AND 85.0511
     ),
     hulls AS (
         SELECT

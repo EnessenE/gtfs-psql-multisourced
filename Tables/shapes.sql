@@ -36,4 +36,14 @@ CREATE INDEX ix_shapes_import_id_data_origin
     ON public.shapes USING btree
     (import_id ASC NULLS LAST, data_origin ASC NULLS LAST)
     TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS ix_shapes_geo_location
+    ON public.shapes USING gist (geo_location)
+    TABLESPACE pg_default;
+
+-- Btree index on latitude+longitude for fast bbox range queries
+-- (used by get_map_shapes_in_bounds; works even if geo_location is unpopulated)
+CREATE INDEX IF NOT EXISTS ix_shapes_lat_lon
+    ON public.shapes USING btree (latitude, longitude)
+    TABLESPACE pg_default;
 -- Index: ix_shapes_internal_id
