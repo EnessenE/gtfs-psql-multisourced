@@ -49,9 +49,3 @@ CREATE INDEX ix_stops_stop_type ON public.stops USING btree (stop_type);
 CREATE INDEX stops_hash_stop_type ON public.stops USING hash (stop_type);
 CREATE INDEX ix_stops_name ON public.stops USING GIST (name gist_trgm_ops);
 
-
-
-CREATE TRIGGER trg_sync_destination
-AFTER INSERT OR UPDATE ON public.stop_times
-FOR EACH ROW
-EXECUTE FUNCTION public.fn_sync_trip_destination_name();

@@ -39,6 +39,9 @@ BEGIN
 
 	DELETE FROM agencies
 	WHERE data_origin = data_origin_target;
+
+	DELETE FROM gtfs_services
+	WHERE data_origin = data_origin_target;
 END;
 $BODY$;
 ALTER PROCEDURE public.delete_old_data_origin(text)

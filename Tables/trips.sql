@@ -94,26 +94,8 @@ CREATE INDEX ix_trips_shape_id
     (shape_id ASC NULLS LAST)
     TABLESPACE pg_default;
 
-
-CREATE OR REPLACE FUNCTION public.fn_sync_trip_destination_name()
-RETURNS TRIGGER AS $BODY$
-BEGIN
-    -- Only perform the expensive last-stop lookup if the trip headsign is missing
-    UPDATE public.trips
-    SET destination_stop_name = (
-        SELECT s.name
-        FROM public.stop_times st
-        JOIN public.stops s ON s.id = st.stop_id AND s.data_origin = st.data_origin
-        WHERE st.trip_id = NEW.trip_id 
-          AND st.data_origin = NEW.data_origin
-        ORDER BY st.stop_sequence DESC
-        LIMIT 1
-    )
-    WHERE id = NEW.trip_id 
-      AND data_origin = NEW.data_origin
-      -- THE KEY CONDITION:
-      AND (headsign IS NULL OR headsign = '');
-
-    RETURN NEW;
-END;
-$BODY$ LANGUAGE plpgsql;
+ALTER TABLE public.trips 
+ADD CONSTRAINT trips_service_handle_id_fkey 
+FOREIGN KEY (service_handle_id) 
+REFERENCES public.gtfs_services (service_handle_id) 
+ON DELETE SET NULL;
