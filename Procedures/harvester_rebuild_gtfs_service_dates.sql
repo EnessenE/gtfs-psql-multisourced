@@ -2,14 +2,18 @@ CREATE OR REPLACE PROCEDURE public.harvester_rebuild_gtfs_service_dates(target_i
 LANGUAGE plpgsql
 AS $BODY$
 BEGIN
-    -- 1. Create handles for this import
+    -- 1. Create handles from BOTH calendars AND calendar_dates 
+    -- (Essential for sources like OpenOV that might not use calendars.txt)
     INSERT INTO public.gtfs_services (import_id, data_origin, service_id)
     SELECT DISTINCT target_import_id, target_origin, service_id
-    FROM public.calendars
-    WHERE data_origin = target_origin
+    FROM (
+        SELECT service_id FROM public.calendars WHERE data_origin = target_origin
+        UNION
+        SELECT service_id FROM public.calendar_dates WHERE data_origin = target_origin
+    ) AS all_services
     ON CONFLICT (import_id, service_id) DO NOTHING;
 
-    -- 2. Link trips to the handles immediately (Crucial for the Stop Times function)
+    -- 2. Link trips to the handles
     UPDATE public.trips t
     SET service_handle_id = s.service_handle_id
     FROM public.gtfs_services s
@@ -34,7 +38,8 @@ BEGIN
         (EXTRACT(isodow FROM g.date) = 5 AND c.friday) OR
         (EXTRACT(isodow FROM g.date) = 6 AND c.saturday) OR
         (EXTRACT(isodow FROM g.date) = 7 AND c.sunday)
-      );
+      )
+    ON CONFLICT DO NOTHING;
 
     -- 4. Add 'Added' exceptions
     INSERT INTO public.gtfs_service_dates (service_handle_id, service_date)
@@ -55,12 +60,9 @@ BEGIN
       AND gsd.service_date = cd.date
       AND cd.exception_type = 'Removed';
 
-    -- 6. SYNC DESTINATION NAMES
-    -- We use PERFORM because we are calling a function that returns VOID 
-    -- and we don't want to return a result set from the procedure.
+    -- 6. Sync Fallback Destination Names
     PERFORM public.fn_sync_trip_destination_names(target_origin);
 
-    -- Update statistics
     ANALYZE public.gtfs_service_dates;
     ANALYZE public.trips;
 END;

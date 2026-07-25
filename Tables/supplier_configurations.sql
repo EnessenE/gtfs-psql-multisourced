@@ -10,7 +10,6 @@ CREATE TABLE public.supplier_configurations
     url text NOT NULL,
     last_updated timestamp with time zone NOT NULL DEFAULT '1970-01-01 00:00:00+01'::timestamp with time zone,
     download_pending boolean NOT NULL DEFAULT false,
-    import_id uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     latest_succesfull_import_id uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     last_attempt timestamp with time zone,
     e_tag text,
