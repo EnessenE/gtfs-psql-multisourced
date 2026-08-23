@@ -9,7 +9,7 @@ BEGIN
         SET 
             last_updated = last_update,
             download_pending = false,
-            latest_succesfull_import_id = supplier_configurations.queued_import_id
+            latest_succesfull_import_id = supplier_configurations.import_id
         WHERE 
             lower(name) = lower(target);
     elsif successfully_downloaded = false then

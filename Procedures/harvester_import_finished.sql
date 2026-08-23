@@ -17,3 +17,4 @@ $BODY$;
 
 ALTER PROCEDURE public.harvester_import_finished(text) OWNER TO dennis;
 
+ 
