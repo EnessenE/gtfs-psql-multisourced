@@ -117,18 +117,18 @@ WHERE
 
 ),
 -- Feeds can contain the same physical departure as several trips: one per platform, or
--- once per overlapping service pattern with slightly different times. Rows with a trip
--- number (short_name) are clustered by number within a five-minute chain (train numbers
--- are unique per day); rows without a number get their own cluster per exact departure time.
+-- once per overlapping service pattern with slightly different times (seconds to minutes
+-- apart). Rows are clustered within a five-minute chain by displayed identity: trip number
+-- when present (train numbers are unique per day), otherwise line + destination.
 lagged AS (
   SELECT
     d.*,
-    CASE WHEN NULLIF(d.short_name, '') IS NULL THEN d.departure_time::text ELSE d.short_name END AS cluster_key,
+    CASE WHEN NULLIF(d.short_name, '') IS NULL THEN COALESCE(d.headsign, '') ELSE d.short_name END AS cluster_key,
     lag(d.departure_time) OVER w AS prev_departure_time
   FROM departures d
   WINDOW w AS (
     PARTITION BY d.data_origin, d.route_short_name,
-      CASE WHEN NULLIF(d.short_name, '') IS NULL THEN d.departure_time::text ELSE d.short_name END
+      CASE WHEN NULLIF(d.short_name, '') IS NULL THEN COALESCE(d.headsign, '') ELSE d.short_name END
     ORDER BY d.departure_time
   )
 ),
