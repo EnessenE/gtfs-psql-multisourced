@@ -21,7 +21,7 @@ CREATE TABLE public.stops
     level_id text,
     platform_code text,
     stop_type integer,
-    internal_id text NOT NULL,
+    internal_id bigint NOT NULL GENERATED ALWAYS AS IDENTITY,
     last_updated timestamp with time zone NOT NULL,
     import_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     CONSTRAINT pk_stops PRIMARY KEY (internal_id),

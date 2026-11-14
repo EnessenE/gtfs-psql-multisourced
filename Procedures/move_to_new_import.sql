@@ -10,13 +10,13 @@ BEGIN
     DELETE FROM calendar_dates
     WHERE import_id != target_id AND data_origin = data_origin_target;
 
+    DELETE FROM frequencies
+    WHERE import_id != target_id AND data_origin = data_origin_target;
+
     DELETE FROM calendars
     WHERE import_id != target_id AND data_origin = data_origin_target;
 
     DELETE FROM gtfs_services 
-    WHERE import_id != target_id AND data_origin = data_origin_target;
-
-    DELETE FROM pathway
     WHERE import_id != target_id AND data_origin = data_origin_target;
 
     DELETE FROM routes
@@ -29,9 +29,6 @@ BEGIN
     WHERE import_id != target_id AND data_origin = data_origin_target;
 
     DELETE FROM stops
-    WHERE import_id != target_id AND data_origin = data_origin_target;
-
-    DELETE FROM transfers
     WHERE import_id != target_id AND data_origin = data_origin_target;
 
     DELETE FROM trips

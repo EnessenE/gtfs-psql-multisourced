@@ -39,8 +39,3 @@ CREATE INDEX ix_calendar_dates_service_id_data_origin_date
     ON public.calendar_dates USING btree
     (service_id ASC NULLS LAST, data_origin ASC NULLS LAST, date ASC NULLS LAST)
     TABLESPACE pg_default;
-
-ALTER TABLE calendar_dates
-ADD CONSTRAINT unique_calendar_dates UNIQUE (data_origin, date, service_id);
-
-CREATE UNIQUE INDEX unique_calendar_dates_idx ON calendar_dates (data_origin, date, service_id);
