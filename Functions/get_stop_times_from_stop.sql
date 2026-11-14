@@ -3,11 +3,7 @@ CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target_stop_id text, 
  LANGUAGE sql
  STABLE PARALLEL SAFE
 AS $function$
-SELECT *
-FROM (
-  SELECT DISTINCT ON (departures.data_origin, departures.route_short_name, departures.short_name, departures.departure_time)
-      departures.*
-  FROM (
+WITH departures AS (
 SELECT
     trips.internal_id::text AS trip_id,
     
@@ -56,7 +52,7 @@ SELECT
             ORDER BY next_st.stop_sequence LIMIT 1
         )
         ELSE NULL 
-    END,
+    END AS starts_from,
 
     -- starts_before: Fixed table aliases
     CASE 
@@ -70,7 +66,7 @@ SELECT
             )
         )
         ELSE NULL 
-    END,
+    END AS starts_before,
 
     -- ends_at: Fixed table aliases and logical truncation check
     CASE 
@@ -89,7 +85,7 @@ SELECT
             AND final_st.stop_sequence < (SELECT MAX(planned_max.stop_sequence) FROM stop_times AS planned_max WHERE planned_max.trip_id = trips.id AND planned_max.data_origin = trips.data_origin)
         )
         ELSE NULL 
-    END
+    END AS ends_at
 
 FROM
     -- 3. Scope anchor
@@ -119,8 +115,44 @@ WHERE
     -- 5. Time Filter (DST & Midnight proof)
     AND (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam')) >= from_time
 
-  ) AS departures
-  ORDER BY departures.data_origin, departures.route_short_name, departures.short_name, departures.departure_time, departures.real_time DESC NULLS LAST, departures.planned_platform ASC NULLS LAST
+),
+-- Feeds can contain the same physical departure as several trips: one per platform, or
+-- once per overlapping service pattern with slightly different times. Rows with a trip
+-- number (short_name) are clustered by number within a five-minute chain (train numbers
+-- are unique per day); rows without a number get their own cluster per exact departure time.
+lagged AS (
+  SELECT
+    d.*,
+    CASE WHEN NULLIF(d.short_name, '') IS NULL THEN d.departure_time::text ELSE d.short_name END AS cluster_key,
+    lag(d.departure_time) OVER w AS prev_departure_time
+  FROM departures d
+  WINDOW w AS (
+    PARTITION BY d.data_origin, d.route_short_name,
+      CASE WHEN NULLIF(d.short_name, '') IS NULL THEN d.departure_time::text ELSE d.short_name END
+    ORDER BY d.departure_time
+  )
+),
+clustered AS (
+  SELECT
+    l.*,
+    SUM(CASE
+          WHEN l.prev_departure_time IS NULL
+            OR l.departure_time - l.prev_departure_time > interval '5 minutes'
+          THEN 1 ELSE 0
+        END) OVER (PARTITION BY l.data_origin, l.route_short_name, l.cluster_key ORDER BY l.departure_time) AS cluster_id
+  FROM lagged l
+)
+SELECT *
+FROM (
+  SELECT DISTINCT ON (c.data_origin, c.route_short_name, c.cluster_key, c.cluster_id)
+      c.trip_id, c.arrival_time, c.departure_time, c.planned_arrival_time, c.planned_departure_time,
+      c.actual_arrival_time, c.actual_departure_time, c.trip_schedule_relationship, c.stop_schedule_relationship,
+      c.stop_headsign, c.data_origin, c.headsign, c.short_name, c.planned_platform, c.actual_platform,
+      c.service_id, c.route_short_name, c.route_long_name, c.operator, c.route_url, c.route_type,
+      c.route_desc, c.route_color, c.route_text_color, c.stop_type, c.real_time, c.starts_from, c.starts_before, c.ends_at
+  FROM clustered c
+  ORDER BY c.data_origin, c.route_short_name, c.cluster_key, c.cluster_id,
+      c.real_time DESC NULLS LAST, c.departure_time, c.planned_platform ASC NULLS LAST
 ) AS deduped
 ORDER BY deduped.departure_time
 LIMIT 100;
