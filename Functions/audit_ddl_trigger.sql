@@ -1,5 +1,6 @@
--- Event trigger function: logs every create/alter/drop of a function or procedure
--- (the "sproc" part of the audit) into audit_log. Created by apply_audit_triggers.
+-- Event trigger function: logs every schema change (create/alter/drop of tables,
+-- indexes, functions, procedures, types, ...) into audit_log. Created by
+-- apply_audit_triggers. audit_log is schema-only: row-level DML is NOT audited.
 
 CREATE OR REPLACE FUNCTION public.audit_ddl_trigger()
     RETURNS event_trigger
@@ -11,10 +12,9 @@ BEGIN
     FOR cmd IN
         SELECT command_tag, object_type, object_identity
         FROM pg_event_trigger_ddl_commands()
-        WHERE object_type IN ('function', 'procedure')
     LOOP
-        INSERT INTO public.audit_log (table_name, operation, object_name, old_data, new_data, changed_by)
-        VALUES ('pg_proc', cmd.command_tag, cmd.object_identity, NULL,
+        INSERT INTO public.audit_log (table_name, operation, object_name, new_data, changed_by)
+        VALUES (coalesce(cmd.object_type, 'schema'), cmd.command_tag, cmd.object_identity,
                 jsonb_build_object(
                     'command_tag', cmd.command_tag,
                     'object_type', cmd.object_type,
@@ -24,7 +24,7 @@ BEGIN
 END;
 $BODY$;
 
--- sql_drop event: logs dropped functions/procedures (drops do not appear in
+-- sql_drop event: logs dropped objects (drops do not appear in
 -- pg_event_trigger_ddl_commands, only in pg_event_trigger_dropped_objects).
 CREATE OR REPLACE FUNCTION public.audit_sql_drop_trigger()
     RETURNS event_trigger
@@ -36,10 +36,9 @@ BEGIN
     FOR cmd IN
         SELECT object_type, object_identity
         FROM pg_event_trigger_dropped_objects()
-        WHERE object_type IN ('function', 'procedure')
     LOOP
-        INSERT INTO public.audit_log (table_name, operation, object_name, old_data, new_data, changed_by)
-        VALUES ('pg_proc', 'DROP ' || upper(cmd.object_type), cmd.object_identity, NULL,
+        INSERT INTO public.audit_log (table_name, operation, object_name, new_data, changed_by)
+        VALUES (coalesce(cmd.object_type, 'schema'), 'DROP ' || upper(coalesce(cmd.object_type, 'object')), cmd.object_identity,
                 jsonb_build_object('object_type', cmd.object_type, 'object_identity', cmd.object_identity),
                 current_user || coalesce('|' || nullif(current_setting('application_name', true), ''), ''));
     END LOOP;
