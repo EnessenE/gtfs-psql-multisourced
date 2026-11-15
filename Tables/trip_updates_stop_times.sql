@@ -38,3 +38,6 @@ CREATE INDEX ix_trip_updates_stop_times_trip_id_data_origin_stop_id ON public.tr
 ) TABLESPACE pg_default;
 
 CREATE INDEX idx_trip_updates_stop_times_trip_stop ON trip_updates_stop_times (trip_id, stop_id, data_origin);
+
+CREATE INDEX IF NOT EXISTS ix_trip_updates_stop_times_stop_dataorigin_last_updated
+    ON public.trip_updates_stop_times (stop_id, data_origin, last_updated DESC);
