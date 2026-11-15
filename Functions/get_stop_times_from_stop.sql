@@ -24,10 +24,10 @@ SELECT
     stop_times.stop_sequence AS stop_sequence,
 
     -- 1. Original Time Hacks (Anchored to gsd.service_date for Midnight Support)
-    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.arrival_time)::int, EXTRACT(MINUTE FROM stop_times.arrival_time)::int, EXTRACT(SECOND FROM stop_times.arrival_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam')) AS arrival_time,
-    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam')) AS departure_time,
-    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.arrival_time)::int, EXTRACT(MINUTE FROM stop_times.arrival_time)::int, EXTRACT(SECOND FROM stop_times.arrival_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam')) AS planned_arrival_time,
-    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam')) AS planned_departure_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.arrival_time)::int, EXTRACT(MINUTE FROM stop_times.arrival_time)::int, EXTRACT(SECOND FROM stop_times.arrival_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_arrival * interval '1 day') AS arrival_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_departure * interval '1 day') AS departure_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.arrival_time)::int, EXTRACT(MINUTE FROM stop_times.arrival_time)::int, EXTRACT(SECOND FROM stop_times.arrival_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_arrival * interval '1 day') AS planned_arrival_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_departure * interval '1 day') AS planned_departure_time,
 
     stop_times.stop_headsign AS stop_headsign,
     stop_times.data_origin AS data_origin,
@@ -68,10 +68,10 @@ WHERE
     -- Cheap pre-filter before the per-trip joins below: a row can only pass the full
     -- time filter if its departure time-of-day is within 14h behind the from_time
     -- wall clock (covers agency timezones UTC-12..UTC+14 around Europe/Amsterdam)
-    AND EXTRACT(EPOCH FROM stop_times.departure_time) >= EXTRACT(EPOCH FROM (from_time AT TIME ZONE 'Europe/Amsterdam')::time) - 50400
+    AND EXTRACT(EPOCH FROM stop_times.departure_time) + stop_times.days_since_start_departure * 86400 >= EXTRACT(EPOCH FROM (from_time AT TIME ZONE 'Europe/Amsterdam')::time) - 50400
 
     -- 5. Time Filter (DST & Midnight proof)
-    AND (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam')) >= from_time
+    AND (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_departure * interval '1 day') >= from_time
 ),
 departures AS (
 SELECT
