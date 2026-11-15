@@ -23,6 +23,10 @@ CREATE TABLE public.position_entities
     occupancy_status text,
     occupancy_percentage integer,
 
+    vehicle_id text,
+    vehicle_label text,
+    vehicle_license_plate text,
+
     CONSTRAINT pk_position_entities PRIMARY KEY (data_origin, id)
 )
 

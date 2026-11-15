@@ -24,7 +24,10 @@ BEGIN
                 position.measurement_time AS measurement_time,
                 position.congestion_level AS congestion_level,
                 position.occupancy_status AS occupancy_status,
-                position.occupancy_percentage AS occupancy_percentage
+                position.occupancy_percentage AS occupancy_percentage,
+                position.vehicle_id AS vehicle_id,
+                position.vehicle_label AS vehicle_label,
+                position.vehicle_license_plate AS vehicle_license_plate
         ) AS source_position
         ON (
             public.position_entities.data_origin = source_position.data_origin
@@ -48,7 +51,10 @@ BEGIN
                 measurement_time = source_position.measurement_time,
                 congestion_level = source_position.congestion_level,
                 occupancy_status = source_position.occupancy_status,
-                occupancy_percentage = source_position.occupancy_percentage
+                occupancy_percentage = source_position.occupancy_percentage,
+                vehicle_id = source_position.vehicle_id,
+                vehicle_label = source_position.vehicle_label,
+                vehicle_license_plate = source_position.vehicle_license_plate
 
         WHEN NOT MATCHED
              AND source_position.trip_id IS NOT NULL THEN
@@ -65,7 +71,10 @@ BEGIN
                 measurement_time,
                 congestion_level,
                 occupancy_status,
-                occupancy_percentage
+                occupancy_percentage,
+                vehicle_id,
+                vehicle_label,
+                vehicle_license_plate
             )
             VALUES (
                 source_position.id,
@@ -80,7 +89,10 @@ BEGIN
                 source_position.measurement_time,
                 source_position.congestion_level,
                 source_position.occupancy_status,
-                source_position.occupancy_percentage
+                source_position.occupancy_percentage,
+                source_position.vehicle_id,
+                source_position.vehicle_label,
+                source_position.vehicle_license_plate
             );
     END LOOP;
 END;
