@@ -1,132 +1,195 @@
-CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(
-    target_stop_id text,
-    target_stop_type integer,
-    from_time timestamp with time zone)
-    RETURNS TABLE(
-        trip_id text, arrival_time timestamp with time zone, departure_time timestamp with time zone, 
-        planned_arrival_time timestamp with time zone, planned_departure_time timestamp with time zone, 
-        actual_arrival_time timestamp with time zone, actual_departure_time timestamp with time zone, 
-        trip_schedule_relationship text, stop_schedule_relationship text, stop_headsign text, 
-        data_origin text, headsign text, short_name text, planned_platform text, 
-        actual_platform text, service_id text, route_short_name text, route_long_name text, 
-        operator text, route_url text, route_type text, route_desc text, 
-        route_color text, route_text_color text, stop_type bigint, 
-        real_time boolean, starts_from text, starts_before boolean, ends_at text
-    ) 
-    LANGUAGE 'sql'
-    STABLE PARALLEL SAFE 
-AS $BODY$
+CREATE OR REPLACE FUNCTION public.get_stop_times_from_stop(target_stop_id text, target_stop_type integer, from_time timestamp with time zone)
+ RETURNS TABLE(trip_id text, arrival_time timestamp with time zone, departure_time timestamp with time zone, planned_arrival_time timestamp with time zone, planned_departure_time timestamp with time zone, actual_arrival_time timestamp with time zone, actual_departure_time timestamp with time zone, trip_schedule_relationship text, stop_schedule_relationship text, stop_headsign text, data_origin text, headsign text, short_name text, planned_platform text, actual_platform text, service_id text, route_short_name text, route_long_name text, operator text, route_url text, route_type text, route_desc text, route_color text, route_text_color text, stop_type bigint, real_time boolean, starts_from text, starts_before boolean, ends_at text)
+ LANGUAGE sql
+ STABLE PARALLEL SAFE
+AS $function$
+WITH agencies_m AS MATERIALIZED (
+  -- scanned once instead of per-row (the join planner seq-scans agencies per
+  -- candidate row otherwise, which takes tens of seconds at busy stations)
+  SELECT id, data_origin, name, timezone FROM agencies
+),
+ctx AS (
+    SELECT
+        date_trunc('day', from_time) AS base_service_day,
+        target_stop_id::uuid AS target_uuid
+),
+-- Candidate stop_times for the target stop, filtered by service date and departure
+-- time. MATERIALIZED so the expensive per-trip lookups (last-stop exclusion below)
+-- only run on this small filtered set, not on every stop_times row of the station.
+filtered AS MATERIALIZED (
 SELECT
-    trips.internal_id::text,
-    
-    -- 1. Planned Times (Math anchored by ctx)
-    ((ctx.service_day + stop_times.arrival_time) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')) AT TIME ZONE 'UTC',
-    ((ctx.service_day + stop_times.departure_time) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')) AT TIME ZONE 'UTC',
-    ((ctx.service_day + stop_times.arrival_time) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')) AT TIME ZONE 'UTC',
-    ((ctx.service_day + stop_times.departure_time) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')) AT TIME ZONE 'UTC',
+    trips.internal_id::text AS trip_id,
+    trips.id AS trip_row_id,
+    stops.id AS stop_row_id,
+    stop_times.stop_sequence AS stop_sequence,
 
-    trip_updates_stop_times.arrival_time AS actual_arrival_time,
-    trip_updates_stop_times.departure_time AS actual_departure_time,
-    -- Trip Status (Scalar lookup: runs only 100 times)
-    (SELECT tu.schedule_relationship FROM trip_updates tu WHERE tu.trip_id = trips.id AND tu.data_origin = trips.data_origin LIMIT 1),
-    trip_updates_stop_times.schedule_relationship AS stop_schedule_relationship,
-    
-    stop_times.stop_headsign,
-    stop_times.data_origin,
-    
-    -- 2. Denormalized Headsign (Fallback to pre-calculated destination name)
-    COALESCE(trips.headsign, trips.destination_stop_name || ' (?)', 'Unknown Destination'),
-    
-    trips.short_name,
-    stops.platform_code,
-    stops.platform_code,
-    trips.service_id,
-    routes.short_name,
-    routes.long_name,
-    COALESCE(agencies.name, 'Unknown agency'),
-    routes.url,
-    routes.type::text,
-    routes.description,
-    routes.color,
-    routes.text_color,
-    stops.stop_type,
-    (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL),
+    -- 1. Original Time Hacks (Anchored to gsd.service_date for Midnight Support)
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.arrival_time)::int, EXTRACT(MINUTE FROM stop_times.arrival_time)::int, EXTRACT(SECOND FROM stop_times.arrival_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_arrival * interval '1 day') AS arrival_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_departure * interval '1 day') AS departure_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.arrival_time)::int, EXTRACT(MINUTE FROM stop_times.arrival_time)::int, EXTRACT(SECOND FROM stop_times.arrival_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_arrival * interval '1 day') AS planned_arrival_time,
+    (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_departure * interval '1 day') AS planned_departure_time,
 
-    -- starts_from: Only calculated if stop is skipped
-    CASE 
-        WHEN lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN (
-            SELECT s_next.name FROM stop_times st_next
-            JOIN stops s_next ON s_next.id = st_next.stop_id AND s_next.data_origin = st_next.data_origin
-            LEFT JOIN trip_updates_stop_times tust_next ON st_next.trip_id = tust_next.trip_id AND st_next.data_origin = tust_next.data_origin AND st_next.stop_id = tust_next.stop_id
-            WHERE st_next.trip_id = trips.id AND st_next.data_origin = trips.data_origin AND st_next.stop_sequence > stop_times.stop_sequence
-            AND (lower(tust_next.schedule_relationship) IS NULL OR lower(tust_next.schedule_relationship) NOT IN ('skipped', 'cancelled'))
-            AND (st_next.pickup_type != 1 OR st_next.drop_off_type != 1)
-            ORDER BY st_next.stop_sequence LIMIT 1
-        )
-        ELSE NULL 
-    END,
+    stop_times.stop_headsign AS stop_headsign,
+    stop_times.data_origin AS data_origin,
 
-    -- starts_before: Boolean check for remaining stops
-    CASE 
-        WHEN lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN (
-            NOT EXISTS (
-                SELECT 1 FROM stop_times st_rem
-                LEFT JOIN trip_updates_stop_times tust_rem ON st_rem.trip_id = tust_rem.trip_id AND st_rem.data_origin = tust_rem.data_origin AND st_rem.stop_id = tust_rem.stop_id
-                WHERE st_rem.trip_id = trips.id AND st_rem.data_origin = trips.data_origin AND st_rem.stop_sequence > stop_times.stop_sequence
-                AND (lower(tust_rem.schedule_relationship) IS NULL OR lower(tust_rem.schedule_relationship) NOT IN ('skipped', 'cancelled'))
-                AND (st_rem.pickup_type != 1 OR st_rem.drop_off_type != 1)
-            )
-        )
-        ELSE NULL 
-    END,
+    -- 2. Fallback Headsign (Clean official, fallback with ?)
+    COALESCE(NULLIF(trips.headsign, ''), trips.destination_stop_name || ' (?)', 'Unknown Destination') AS headsign,
 
-    -- ends_at: Corrected Truncation Logic (Actual Last < Planned Last)
-    CASE 
-        WHEN (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL) THEN (
-            SELECT s_final.name 
-            FROM stop_times st_final
-            JOIN stops s_final ON s_final.id = st_final.stop_id AND s_final.data_origin = st_final.data_origin
-            WHERE st_final.trip_id = trips.id AND st_final.data_origin = trips.data_origin
-            AND st_final.stop_sequence = (
-                SELECT MAX(st_act.stop_sequence)
-                FROM stop_times st_act
-                LEFT JOIN trip_updates_stop_times tust_act ON st_act.trip_id = tust_act.trip_id AND st_act.stop_id = tust_act.stop_id AND st_act.data_origin = tust_act.data_origin
-                WHERE st_act.trip_id = trips.id AND st_act.data_origin = trips.data_origin
-                  AND (lower(tust_act.schedule_relationship) IS NULL OR lower(tust_act.schedule_relationship) NOT IN ('skipped', 'cancelled'))
-            )
-            -- Condition: only if actual sequence is strictly less than the planned max
-            AND st_final.stop_sequence < (SELECT MAX(stop_sequence) FROM stop_times WHERE trip_id = trips.id AND data_origin = trips.data_origin)
-        )
-        ELSE NULL 
-    END
+    trips.short_name AS short_name,
+    stops.platform_code AS planned_platform,
+    stops.platform_code AS actual_platform,
+    trips.service_id AS service_id,
+    routes.short_name AS route_short_name,
+    routes.long_name AS route_long_name,
+    COALESCE(agencies.name, 'Unknown agency') AS operator,
+    routes.url AS route_url,
+    routes.type::text AS route_type,
+    routes.description AS route_desc,
+    routes.color AS route_color,
+    routes.text_color AS route_text_color,
+    stops.stop_type AS stop_type
 
 FROM
-    -- Shared variables provided via CROSS JOIN to fix scoping issues
-    (SELECT 
-        date_trunc('day', from_time) AS service_day,
-        (from_time - date_trunc('day', from_time)) AS min_interval,
-        target_stop_id::uuid AS target_uuid
-    ) ctx
-    CROSS JOIN related_stops rs
-    INNER JOIN stops ON stops.internal_id = rs.related_stop AND stops.stop_type = target_stop_type
+    ctx
+    CROSS JOIN related_stops
+    INNER JOIN stops ON stops.internal_id = related_stops.related_stop AND stops.stop_type = target_stop_type
     INNER JOIN stop_times ON stop_times.stop_id = stops.id AND stop_times.data_origin = stops.data_origin
     INNER JOIN trips ON trips.id = stop_times.trip_id AND trips.data_origin = stop_times.data_origin
-    
-    -- 3. The New Normalized Calendar Join (The Sub-Second Fix)
-    INNER JOIN gtfs_service_dates gsd ON gsd.service_handle_id = trips.service_handle_id AND gsd.service_date = ctx.service_day
-    
-    INNER JOIN routes ON routes.id = trips.route_id AND routes.data_origin = trips.data_origin
-    LEFT JOIN agencies ON (agencies.id = routes.agency_id AND agencies.data_origin = routes.data_origin)
-    LEFT JOIN trip_updates_stop_times ON (trips.id = trip_updates_stop_times.trip_id AND trip_updates_stop_times.stop_id = stops.id AND trips.data_origin = trip_updates_stop_times.data_origin)
-    LEFT JOIN position_entities ON (trips.id = position_entities.trip_id AND trips.data_origin = position_entities.data_origin)
-WHERE
-    rs.primary_stop = ctx.target_uuid
-    AND stop_times.departure_time IS NOT NULL
-    -- Broad index hint for stop_times departure index
-    AND stop_times.departure_time >= (ctx.min_interval - interval '1 hour')
-    -- Final precise precision check
-    AND ((ctx.service_day + stop_times.departure_time) AT TIME ZONE COALESCE(agencies.timezone, 'UTC')) AT TIME ZONE 'UTC' >= from_time
 
-ORDER BY 2 ASC
+    -- 4. Today and Tomorrow Join (Midnight Awareness)
+    INNER JOIN gtfs_service_dates gsd ON gsd.service_handle_id = trips.service_handle_id
+        AND gsd.service_date BETWEEN (ctx.base_service_day::date - 1) AND ctx.base_service_day::date
+
+    INNER JOIN routes ON routes.id = trips.route_id AND routes.data_origin = trips.data_origin
+    LEFT JOIN agencies_m AS agencies ON (agencies.id = routes.agency_id AND agencies.data_origin = routes.data_origin)
+WHERE
+    related_stops.primary_stop = ctx.target_uuid
+    AND stop_times.departure_time IS NOT NULL
+    -- Cheap pre-filter before the per-trip joins below: a row can only pass the full
+    -- time filter if its departure time-of-day is within 14h behind the from_time
+    -- wall clock (covers agency timezones UTC-12..UTC+14 around Europe/Amsterdam)
+    AND EXTRACT(EPOCH FROM stop_times.departure_time) + stop_times.days_since_start_departure * 86400 >= EXTRACT(EPOCH FROM (from_time AT TIME ZONE 'Europe/Amsterdam')::time) - 50400
+
+    -- 5. Time Filter (DST & Midnight proof)
+    AND (make_timestamp(EXTRACT(YEAR FROM gsd.service_date)::int, EXTRACT(MONTH FROM gsd.service_date)::int, EXTRACT(DAY FROM gsd.service_date)::int, EXTRACT(HOUR FROM stop_times.departure_time)::int, EXTRACT(MINUTE FROM stop_times.departure_time)::int, EXTRACT(SECOND FROM stop_times.departure_time)) AT TIME ZONE COALESCE(agencies.timezone, 'Europe/Amsterdam') + stop_times.days_since_start_departure * interval '1 day') >= from_time
+),
+departures AS (
+SELECT
+    f.*,
+    trip_updates_stop_times.arrival_time AS actual_arrival_time,
+    trip_updates_stop_times.departure_time AS actual_departure_time,
+    -- Trip Status lookup (Lazy Scalar: Runs only 100 times)
+    (SELECT tu.schedule_relationship FROM trip_updates tu WHERE tu.trip_id = f.trip_row_id AND tu.data_origin = f.data_origin LIMIT 1) AS trip_schedule_relationship,
+    trip_updates_stop_times.schedule_relationship AS stop_schedule_relationship,
+    (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL) AS real_time,
+
+    -- starts_from: Fixed table aliases
+    CASE
+        WHEN lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN (
+            SELECT next_stops.name FROM stop_times AS next_st
+            JOIN stops AS next_stops ON next_st.stop_id = next_stops.id AND next_st.data_origin = next_stops.data_origin
+            LEFT JOIN trip_updates_stop_times AS next_tust ON next_st.trip_id = next_tust.trip_id AND next_st.data_origin = next_tust.data_origin AND next_st.stop_id = next_tust.stop_id
+            WHERE next_st.trip_id = f.trip_row_id AND next_st.data_origin = f.data_origin AND next_st.stop_sequence > f.stop_sequence
+            AND (lower(next_tust.schedule_relationship) IS NULL OR lower(next_tust.schedule_relationship) NOT IN ('skipped', 'cancelled'))
+            AND (next_st.pickup_type != 1 OR next_st.drop_off_type != 1)
+            ORDER BY next_st.stop_sequence LIMIT 1
+        )
+        ELSE NULL
+    END AS starts_from,
+
+    -- starts_before: Fixed table aliases
+    CASE
+        WHEN lower(trip_updates_stop_times.schedule_relationship) = 'skipped' THEN (
+            NOT EXISTS (
+                SELECT 1 FROM stop_times AS rem_st
+                LEFT JOIN trip_updates_stop_times AS rem_tust ON rem_st.trip_id = rem_tust.trip_id AND rem_st.data_origin = rem_tust.data_origin AND rem_st.stop_id = rem_tust.stop_id
+                WHERE rem_st.trip_id = f.trip_row_id AND rem_st.data_origin = f.data_origin AND rem_st.stop_sequence > f.stop_sequence
+                AND (lower(rem_tust.schedule_relationship) IS NULL OR lower(rem_tust.schedule_relationship) NOT IN ('skipped', 'cancelled'))
+                AND (rem_st.pickup_type != 1 OR rem_st.drop_off_type != 1)
+            )
+        )
+        ELSE NULL
+    END AS starts_before,
+
+    -- ends_at: Fixed table aliases and logical truncation check
+    CASE
+        WHEN (trip_updates_stop_times.trip_id IS NOT NULL OR position_entities.trip_id IS NOT NULL) THEN (
+            SELECT final_stops.name
+            FROM stop_times AS final_st
+            JOIN stops AS final_stops ON final_stops.id = final_st.stop_id AND final_stops.data_origin = final_st.data_origin
+            WHERE final_st.trip_id = f.trip_row_id AND final_st.data_origin = f.data_origin
+            AND final_st.stop_sequence = (
+                SELECT MAX(act_end_st.stop_sequence)
+                FROM stop_times AS act_end_st
+                LEFT JOIN trip_updates_stop_times AS act_end_tust ON act_end_st.trip_id = act_end_tust.trip_id AND act_end_st.stop_id = act_end_tust.stop_id AND act_end_st.data_origin = act_end_tust.data_origin
+                WHERE act_end_st.trip_id = f.trip_row_id AND act_end_st.data_origin = f.data_origin
+                  AND (lower(act_end_tust.schedule_relationship) IS NULL OR lower(act_end_tust.schedule_relationship) NOT IN ('skipped', 'cancelled'))
+            )
+            AND final_st.stop_sequence < (SELECT MAX(planned_max.stop_sequence) FROM stop_times AS planned_max WHERE planned_max.trip_id = f.trip_row_id AND planned_max.data_origin = f.data_origin)
+        )
+        ELSE NULL
+    END AS ends_at
+
+FROM filtered f
+LEFT JOIN trip_updates_stop_times ON (f.trip_row_id = trip_updates_stop_times.trip_id AND f.stop_row_id = trip_updates_stop_times.stop_id AND f.data_origin = trip_updates_stop_times.data_origin)
+LEFT JOIN position_entities ON (f.trip_row_id = position_entities.trip_id AND f.data_origin = position_entities.data_origin)
+WHERE
+    -- Last planned stop of the trip: train ends here, not a departure
+    f.stop_sequence < (SELECT MAX(st_max.stop_sequence) FROM stop_times st_max WHERE st_max.trip_id = f.trip_row_id AND st_max.data_origin = f.data_origin)
+),
+-- Feeds can contain the same physical departure as several trips: one per platform, or
+-- once per overlapping service pattern with slightly different times (seconds to minutes
+-- apart). Rows are clustered within a five-minute chain by displayed identity: trip number
+-- when present (train numbers are unique per day), or line + destination for bus stops
+-- (bus trips have no number). Other unnumbered modes (metro/tram run every 2-3 minutes
+-- legitimately) keep one cluster per exact departure time.
+lagged AS (
+  SELECT
+    d.*,
+    CASE
+      WHEN NULLIF(d.short_name, '') IS NOT NULL THEN d.short_name
+      WHEN target_stop_type IN (3, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716)
+        THEN COALESCE(d.headsign, '')
+      ELSE d.departure_time::text
+    END AS cluster_key,
+    lag(d.departure_time) OVER w AS prev_departure_time
+  FROM departures d
+  WINDOW w AS (
+    PARTITION BY d.data_origin, d.route_short_name,
+      CASE
+        WHEN NULLIF(d.short_name, '') IS NOT NULL THEN d.short_name
+        WHEN target_stop_type IN (3, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713, 714, 715, 716)
+          THEN COALESCE(d.headsign, '')
+        ELSE d.departure_time::text
+      END
+    ORDER BY d.departure_time
+  )
+),
+clustered AS (
+  SELECT
+    l.*,
+    SUM(CASE
+          WHEN l.prev_departure_time IS NULL THEN 1
+          WHEN NULLIF(l.short_name, '') IS NOT NULL THEN
+            CASE WHEN l.departure_time - l.prev_departure_time > interval '5 minutes' THEN 1 ELSE 0 END
+          ELSE
+            CASE WHEN l.departure_time - l.prev_departure_time >= interval '5 minutes' THEN 1 ELSE 0 END
+        END) OVER (PARTITION BY l.data_origin, l.route_short_name, l.cluster_key ORDER BY l.departure_time) AS cluster_id
+  FROM lagged l
+)
+SELECT *
+FROM (
+  SELECT DISTINCT ON (c.data_origin, c.route_short_name, c.cluster_key, c.cluster_id)
+      c.trip_id, c.arrival_time, c.departure_time, c.planned_arrival_time, c.planned_departure_time,
+      c.actual_arrival_time, c.actual_departure_time, c.trip_schedule_relationship, c.stop_schedule_relationship,
+      c.stop_headsign, c.data_origin, c.headsign, c.short_name, c.planned_platform, c.actual_platform,
+      c.service_id, c.route_short_name, c.route_long_name, c.operator, c.route_url, c.route_type,
+      c.route_desc, c.route_color, c.route_text_color, c.stop_type, c.real_time, c.starts_from, c.starts_before, c.ends_at
+  FROM clustered c
+  ORDER BY c.data_origin, c.route_short_name, c.cluster_key, c.cluster_id,
+      c.real_time DESC NULLS LAST, c.departure_time, c.planned_platform ASC NULLS LAST
+) AS deduped
+ORDER BY deduped.departure_time
 LIMIT 100;
-$BODY$;
+$function$
+
