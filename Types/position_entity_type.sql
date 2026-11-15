@@ -1,0 +1,1 @@
+CREATE TYPE public.position_entity_type AS (data_origin text, last_updated timestamp with time zone, id text, trip_id text, latitude double precision, longitude double precision, stop_id text, current_status text, measurement_time timestamp with time zone, congestion_level text, occupancy_status text, occupancy_percentage integer);
