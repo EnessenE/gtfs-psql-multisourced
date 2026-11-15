@@ -10,7 +10,7 @@ AS $$
 BEGIN
     -- Perform a single bulk insert for all rows in the _shapes array
     INSERT INTO public.shapes (
-        data_origin, id, sequence, latitude, longitude, geo_location, distance_travelled, last_updated, import_id
+        data_origin, id, sequence, latitude, longitude, distance_travelled, last_updated, import_id
     )
     SELECT 
         _shape.data_origin, 
@@ -18,7 +18,6 @@ BEGIN
         _shape.sequence_data,  -- Use _sequence_data from the array
         _shape.latitude, 
         _shape.longitude, 
-        ST_SetSRID(ST_MakePoint(_shape.longitude, _shape.latitude), 4326),  -- Create geo_location point
         _shape.distance_travelled, 
         _shape.last_updated, 
         _shape.import_id
