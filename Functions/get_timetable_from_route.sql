@@ -12,6 +12,7 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
         stop_sequence bigint,
         trip_id       text,
         trip_headsign text,
+        direction_id  integer,
         departure_time time)
     LANGUAGE 'sql'
     COST 100 VOLATILE PARALLEL UNSAFE ROWS 1000
@@ -73,6 +74,7 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
             trips.id AS gtfs_trip_id,
             trips.internal_id::text AS internal_trip_id,
             trips.headsign,
+            trips.direction,
             trips.data_origin,
             trips.import_id,
             MIN(stop_times.departure_time) AS first_departure
@@ -119,7 +121,7 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
                   AND LOWER(cd2.exception_type) = 'added'
             )
         )
-        GROUP BY trips.id, trips.internal_id, trips.headsign, trips.data_origin, trips.import_id
+        GROUP BY trips.id, trips.internal_id, trips.headsign, trips.direction, trips.data_origin, trips.import_id
         ORDER BY MIN(stop_times.departure_time) NULLS LAST
         LIMIT 100
     )
@@ -130,6 +132,7 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
         COALESCE(MIN(canonical_stop_order.seq), 999999)     AS stop_sequence,
         route_trips.internal_trip_id                        AS trip_id,
         route_trips.headsign                                AS trip_headsign,
+        route_trips.direction                               AS direction_id,
         MIN(stop_times.departure_time)                      AS departure_time
     FROM route_trips
     INNER JOIN stop_times
@@ -149,6 +152,7 @@ CREATE OR REPLACE FUNCTION public.get_timetable_from_route(
         related_stops.primary_stop,
         route_trips.internal_trip_id,
         route_trips.headsign,
+        route_trips.direction,
         route_trips.first_departure
     ORDER BY
         COALESCE(MIN(canonical_stop_order.seq), 999999),
