@@ -27,7 +27,9 @@ BEGIN
             _stop.wheelchair_boarding_data AS wheelchair_boarding, 
             _stop.level_id, 
             _stop.platform_code, 
-            _stop.stop_type_data AS stop_type, 
+            -- stop_type is derived data (type of the routes serving the stop), written only by
+            -- merge_stop; upsert must not clobber it with the feed's location_type placeholder
+            NULL::integer AS stop_type, 
             _stop.last_updated, 
             _stop.import_id
         FROM UNNEST(_stops) AS _stop
@@ -49,7 +51,6 @@ WHEN MATCHED THEN
             wheelchair_boarding = source.wheelchair_boarding,
             level_id = source.level_id,
             platform_code = source.platform_code,
-            stop_type = source.stop_type,
             last_updated = source.last_updated,
             import_id = source.import_id
     WHEN NOT MATCHED THEN
