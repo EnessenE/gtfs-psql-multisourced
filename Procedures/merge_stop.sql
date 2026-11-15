@@ -52,9 +52,23 @@ BEGIN
     END IF;
 
     -- 2. Set stop type based on the routes it serves. This query is indexed and should be fast.
+    -- Classic GTFS route types (0-12) are normalized to their extended equivalent (100+)
+    -- so stops.stop_type is always an extended type.
     UPDATE stops
     SET stop_type = COALESCE((
-        SELECT r.type
+        SELECT CASE r.type
+            WHEN 0 THEN 900   -- tram -> TramService
+            WHEN 1 THEN 401   -- subway -> MetroService
+            WHEN 2 THEN 100   -- rail -> RailwayService
+            WHEN 3 THEN 700   -- bus -> BusService
+            WHEN 4 THEN 1000  -- ferry -> WaterTransportService
+            WHEN 5 THEN 1302  -- cable tram -> CableCarService
+            WHEN 6 THEN 1300  -- aerial lift -> AerialLiftService
+            WHEN 7 THEN 1400  -- funicular -> FunicularService
+            WHEN 11 THEN 800  -- trolleybus -> TrolleybusService
+            WHEN 12 THEN 405  -- monorail -> Monorail
+            ELSE r.type
+        END
         FROM stop_times st
         JOIN trips t ON st.trip_id = t.id AND st.data_origin = t.data_origin
         JOIN routes r ON t.route_id = r.id AND t.data_origin = r.data_origin
